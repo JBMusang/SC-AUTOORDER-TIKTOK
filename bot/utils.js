@@ -2,7 +2,6 @@ const { getSession } = require('./sessions');
 const path = require('path');
 const fs = require('fs');
 
-const BANNER_PATH = path.join(__dirname, '../assets/banner.png');
 let cachedBannerFileId = null;
 
 /** Escape special HTML characters */
@@ -28,10 +27,11 @@ async function editMain(bot, chatId, text, keyboard, msgId = null) {
   if (msgId === 'new') {
     let m;
     let isPhoto = false;
+    const bannerUrl = process.env.BANNER_URL || '';
 
     try {
-      if (fs.existsSync(BANNER_PATH)) {
-        const photoSource = cachedBannerFileId ? cachedBannerFileId : BANNER_PATH;
+      if (bannerUrl) {
+        const photoSource = cachedBannerFileId ? cachedBannerFileId : bannerUrl;
         m = await bot.sendPhoto(chatId, photoSource, {
           caption: text,
           parse_mode: 'HTML',

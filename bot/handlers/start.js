@@ -5,7 +5,6 @@ const { escapeHTML, editMain } = require('../utils');
 const path = require('path');
 
 const storeName = process.env.STORE_NAME || 'PanzzStore';
-const BANNER_PATH = path.join(__dirname, '../../assets/banner.png');
 
 const REPLY_KEYBOARD = {
   keyboard: [
@@ -104,6 +103,7 @@ async function handleStart(bot, msg) {
 
   const caption  = buildCaption(name);
   const inlineKeyboard = buildMainKeyboard(chatId);
+  const bannerUrl = process.env.BANNER_URL || '';
 
   // 2. Kirim pesan penyambung & banner secara PARALEL agar super cepat, tapi tunggu barengan
   try {
@@ -112,28 +112,46 @@ async function handleStart(bot, msg) {
       reply_markup: REPLY_KEYBOARD,
     });
 
-    const photoSource = cachedBannerFileId ? cachedBannerFileId : BANNER_PATH;
-    const p2 = bot.sendPhoto(chatId, photoSource, {
-      caption,
-      parse_mode: 'HTML',
-      reply_markup: inlineKeyboard,
-    });
+    if (bannerUrl) {
+      const photoSource = cachedBannerFileId ? cachedBannerFileId : bannerUrl;
+      const p2 = bot.sendPhoto(chatId, photoSource, {
+        caption,
+        parse_mode: 'HTML',
+        reply_markup: inlineKeyboard,
+      });
 
-    const [msg1, photoMsg] = await Promise.all([p1, p2]);
+      const [msg1, photoMsg] = await Promise.all([p1, p2]);
 
-    // Cache file_id untuk pengiriman super kilat selanjutnya
-    if (!cachedBannerFileId && photoMsg.photo && photoMsg.photo.length > 0) {
-      cachedBannerFileId = photoMsg.photo[photoMsg.photo.length - 1].file_id;
+      // Cache file_id untuk pengiriman super kilat selanjutnya
+      if (!cachedBannerFileId && photoMsg.photo && photoMsg.photo.length > 0) {
+        cachedBannerFileId = photoMsg.photo[photoMsg.photo.length - 1].file_id;
+      }
+
+      session.mainMessageId = photoMsg.message_id;
+      session.mainIsPhoto   = true;
+
+      // Simpan ke Firestore untuk pemulihan nanti jika bot restart
+      await db.collection('users').doc(String(chatId)).update({
+        mainMessageId: photoMsg.message_id,
+        mainIsPhoto: true
+      }).catch(() => {});
+    } else {
+      const [msg1, textMsg] = await Promise.all([
+        p1,
+        bot.sendMessage(chatId, caption, {
+          parse_mode: 'HTML',
+          reply_markup: inlineKeyboard,
+        })
+      ]);
+
+      session.mainMessageId = textMsg.message_id;
+      session.mainIsPhoto   = false;
+
+      await db.collection('users').doc(String(chatId)).update({
+        mainMessageId: textMsg.message_id,
+        mainIsPhoto: false
+      }).catch(() => {});
     }
-
-    session.mainMessageId = photoMsg.message_id;
-    session.mainIsPhoto   = true;
-
-    // Simpan ke Firestore untuk pemulihan nanti jika bot restart
-    await db.collection('users').doc(String(chatId)).update({
-      mainMessageId: photoMsg.message_id,
-      mainIsPhoto: true
-    }).catch(() => {});
   } catch (e) {
     console.error('Send message/photo error:', e.message);
     // Fallback if photo fails

@@ -113,6 +113,7 @@ Isi file `.env` dengan data kamu:
 | `PAKASIR_API_KEY` | ✅ | API Key dari dashboard Pakasir |
 | `PAKASIR_SLUG` | ✅ | Slug/username akun Pakasir kamu |
 | `BASE_URL` | ✅ | URL server kamu (HTTPS) — ngrok / domain VPS (tanpa garis miring di akhir) |
+| `BANNER_URL` | ❌ | URL gambar banner/logo utama (opsional, kosongkan jika ingin bot hanya bertipe teks tanpa foto) |
 | `ADMIN_SECRET_KEY` | ✅ | Password rahasia untuk otentikasi Admin Mini App |
 | `STORAGE_CHANNEL_ID` | ✅ | ID Channel Telegram Private untuk backup penyimpanan file akun |
 
