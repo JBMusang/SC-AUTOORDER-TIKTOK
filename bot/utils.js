@@ -1,4 +1,9 @@
 const { getSession } = require('./sessions');
+const path = require('path');
+const fs = require('fs');
+
+const BANNER_PATH = path.join(__dirname, '../assets/banner.png');
+let cachedBannerFileId = null;
 
 /** Escape special HTML characters */
 function escapeHTML(text) {
@@ -21,19 +26,45 @@ async function editMain(bot, chatId, text, keyboard, msgId = null) {
 
   // Jika dipaksa untuk mengirim pesan baru (misal via Reply Keyboard)
   if (msgId === 'new') {
-    const m = await bot.sendMessage(chatId, text, {
-      parse_mode: 'HTML',
-      reply_markup: keyboard,
-    });
+    let m;
+    let isPhoto = false;
+
+    try {
+      if (fs.existsSync(BANNER_PATH)) {
+        const photoSource = cachedBannerFileId ? cachedBannerFileId : BANNER_PATH;
+        m = await bot.sendPhoto(chatId, photoSource, {
+          caption: text,
+          parse_mode: 'HTML',
+          reply_markup: keyboard,
+        });
+        isPhoto = true;
+        if (!cachedBannerFileId && m.photo && m.photo.length > 0) {
+          cachedBannerFileId = m.photo[m.photo.length - 1].file_id;
+        }
+      } else {
+        m = await bot.sendMessage(chatId, text, {
+          parse_mode: 'HTML',
+          reply_markup: keyboard,
+        });
+      }
+    } catch (e) {
+      console.error('Error sending new main message with photo:', e.message);
+      m = await bot.sendMessage(chatId, text, {
+        parse_mode: 'HTML',
+        reply_markup: keyboard,
+      });
+      isPhoto = false;
+    }
+
     session.mainMessageId = m.message_id;
-    session.mainIsPhoto = false;
+    session.mainIsPhoto = isPhoto;
 
     // Simpan ke Firestore untuk pemulihan nanti jika bot restart
     try {
       const { db } = require('../server/firebase');
       await db.collection('users').doc(String(chatId)).update({
         mainMessageId: m.message_id,
-        mainIsPhoto: false
+        mainIsPhoto: isPhoto
       }).catch(() => {});
     } catch {}
     return;
