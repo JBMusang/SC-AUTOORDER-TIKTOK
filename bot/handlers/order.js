@@ -335,7 +335,11 @@ async function deliverOrder(bot, orderId) {
     cleanupZip(tempZipPath);
     
     // Buat link download
-    const downloadUrl = `${process.env.BASE_URL}/downloads/${finalZipName}`;
+    let baseUrl = process.env.BASE_URL || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `https://${baseUrl}`;
+    }
+    const downloadUrl = `${baseUrl}/downloads/${finalZipName}`;
     const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
     
     const deliveryText = `✅ <b>Order Berhasil!</b>

@@ -31,7 +31,11 @@ Pilih menu di bawah untuk mulai! 👇`;
 
 function buildMainKeyboard(chatId) {
   const isAdmin = String(chatId) === String(process.env.ADMIN_TELEGRAM_ID);
-  const miniAppUrl = `${process.env.BASE_URL}/miniapp`;
+  let baseUrl = process.env.BASE_URL || '';
+  if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  const miniAppUrl = `${baseUrl}/miniapp`;
   return {
     inline_keyboard: [
       [{ text: '🛒 Beli Akun TikTok', callback_data: 'menu_beli' }],
