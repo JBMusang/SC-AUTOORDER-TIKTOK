@@ -133,12 +133,10 @@ Railway adalah platform hosting cloud yang sangat cocok dan praktis untuk mendep
 
 ### 3. Masukkan Variables di Railway
 Buka menu **Variables** pada service Anda di Railway, lalu tambahkan semua konfigurasi dari `.env` lokal Anda satu per satu. 
-Untuk Firebase (karena tidak ada file `serviceAccountKey.json`), masukkan environment variables berikut:
-* `FIREBASE_PROJECT_ID`
-* `FIREBASE_PRIVATE_KEY_ID`
-* `FIREBASE_PRIVATE_KEY` (ganti `\n` dengan baris baru sesungguhnya)
-* `FIREBASE_CLIENT_EMAIL`
-* `FIREBASE_CLIENT_ID`
+Untuk Firebase (karena file `serviceAccountKey.json` tidak di-upload ke Git), Anda cukup membuat **satu variabel** di Railway:
+* `FIREBASE_SERVICE_ACCOUNT`: Copy dan paste **seluruh isi** dari file `serviceAccountKey.json` lokal Anda ke kolom nilai variabel ini (dalam format JSON utuh).
+
+*(Catatan: Alternatifnya, Anda juga tetap bisa memasukkan variabel terpisah seperti `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY` dengan penggantian line-break manual, namun menggunakan `FIREBASE_SERVICE_ACCOUNT` jauh lebih disarankan karena anti-error).*
 
 ### 4. Hubungkan Domain & Set `BASE_URL`
 1. Masuk ke tab **Settings** di Railway Anda, lalu cari bagian **Networking** dan klik **Generate Domain** (contoh: `https://xxx.up.railway.app`).

@@ -5,14 +5,27 @@ const fs = require('fs');
 
 // ─── FIREBASE INIT ────────────────────────────────────────────────────────────
 // Prioritas 1: Gunakan serviceAccountKey.json jika ada di root project
-// Prioritas 2: Gunakan environment variables dari .env
+// Prioritas 2: Gunakan environment variable FIREBASE_SERVICE_ACCOUNT (JSON string)
+// Prioritas 3: Gunakan environment variables terpisah dari .env
 let serviceAccount;
 
 const jsonKeyPath = path.join(__dirname, '../serviceAccountKey.json');
 if (fs.existsSync(jsonKeyPath)) {
   serviceAccount = require(jsonKeyPath);
   console.log('✅ Firebase: menggunakan serviceAccountKey.json');
-} else {
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+  try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    if (serviceAccount.private_key) {
+      serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    }
+    console.log('✅ Firebase: menggunakan environment variable FIREBASE_SERVICE_ACCOUNT (JSON)');
+  } catch (err) {
+    console.error('❌ Gagal memproses FIREBASE_SERVICE_ACCOUNT JSON:', err.message);
+  }
+}
+
+if (!serviceAccount) {
   serviceAccount = {
     type: 'service_account',
     project_id: process.env.FIREBASE_PROJECT_ID,
@@ -23,7 +36,7 @@ if (fs.existsSync(jsonKeyPath)) {
     auth_uri: 'https://accounts.google.com/o/oauth2/auth',
     token_uri: 'https://oauth2.googleapis.com/token',
   };
-  console.log('✅ Firebase: menggunakan environment variables');
+  console.log('✅ Firebase: menggunakan environment variables terpisah');
 }
 
 if (!admin.apps.length) {
