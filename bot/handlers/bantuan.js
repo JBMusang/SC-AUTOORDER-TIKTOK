@@ -1,25 +1,24 @@
 const { escapeHTML, editMain } = require('../utils');
 const storeName = process.env.STORE_NAME || 'PanzzStore';
 
-const FAQ = [
-  { q: 'Apa itu akun muda & akun tua?',    a: 'Akun muda baru dibuat. Akun tua sudah lama ada dan punya riwayat aktivitas.' },
-  { q: 'Bedanya garansi & no garansi?',     a: 'Akun bergaransi diganti jika bermasalah dalam waktu yang ditentukan. No garansi dijual apa adanya.' },
-  { q: 'Berapa lama pengiriman?',           a: 'Otomatis setelah pembayaran dikonfirmasi, biasanya kurang dari 1 menit.' },
-  { q: 'Cara bayar?',                       a: 'Melalui link Pakasir yang dibuat otomatis setelah order.' },
-];
-
 async function handleBantuan(bot, chatId, messageId) {
   const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
 
-  const faqText = FAQ.map((f, i) =>
-    `<b>${i + 1}. ${escapeHTML(f.q)}</b>\n<i>${escapeHTML(f.a)}</i>`
-  ).join('\n\n');
+  const text = `🆘 <b>Pusat Informasi & FAQ ${escapeHTML(storeName)}</b>
 
-  const text = `🆘 <b>Pusat Bantuan ${storeName}</b>
+💬 <b>Pertanyaan Umum (FAQ):</b>
 
-${faqText}
+📌 <b>Q: Apa bedanya Akun Muda & Akun Tua?</b>
+💡 <i>A: Akun muda adalah akun fresh yang baru dibuat. Akun tua adalah akun berumur yang lebih tahan terhadap pembatasan/limit.</i>
 
-<blockquote>📞 Hubungi Admin: @${escapeHTML(adminUsername)}</blockquote>`;
+📌 <b>Q: Bagaimana dengan sistem Garansi?</b>
+💡 <i>A: Akun bergaransi mendapatkan proteksi klaim jika akun dinonaktifkan secara sepihak dalam masa garansi aktif.</i>
+
+📌 <b>Q: Berapa lama akun terkirim?</b>
+💡 <i>A: Sistem kami 100% otomatis. Akun akan terkirim instan dalam waktu 1-3 detik setelah transaksi Anda dikonfirmasi.</i>
+
+---
+📞 <i>Butuh bantuan lebih lanjut? Hubungi Admin kami langsung:</i> @${escapeHTML(adminUsername)}`;
 
   const keyboard = {
     inline_keyboard: [

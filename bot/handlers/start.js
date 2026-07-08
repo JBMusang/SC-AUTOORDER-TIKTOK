@@ -16,17 +16,16 @@ const REPLY_KEYBOARD = {
 };
 
 function buildCaption(name) {
-  return `✨ <b>Halo, ${escapeHTML(name)}!</b> Selamat datang di
+  return `✨ <b>Welcome to ${escapeHTML(storeName.toUpperCase())} Bot!</b>
 
-🏪 <b>${storeName.toUpperCase()}</b>
-<i>Toko Akun TikTok Terpercaya #1</i>
+<blockquote>Halo, <b>${escapeHTML(name)}</b>! Kami menyediakan Akun TikTok siap pakai berkualitas tinggi dengan sistem pengiriman instan.</blockquote>
 
-<blockquote>⚡ Pengiriman Otomatis & Instan
-🔒 Akun Berkualitas & Bergaransi
-💎 Harga Terjangkau & Terbaik
-🛡️ Transaksi Aman 100%</blockquote>
+🛡️ <b>Kenapa Memilih Kami?</b>
+• ⚡ <b>Instant Delivery:</b> Akun dikirim otomatis dalam hitungan detik setelah bayar.
+• 🔒 <b>Quality Assurance:</b> Garansi keamanan & keaslian akun 100%.
+• 💳 <b>Easy Payment:</b> Mendukung QRIS otomatis & Sistem Saldo.
 
-Pilih menu di bawah untuk mulai! 👇`;
+Pilih menu di bawah ini untuk memulai pemesanan Anda! 👇`;
 }
 
 function buildMainKeyboard(chatId) {
@@ -57,7 +56,7 @@ async function handleStart(bot, msg) {
   // 1. Kirim pesan loading awal TANPA reply_markup agar pesan bisa di-edit lancar
   let loadingMsg;
   try {
-    loadingMsg = await bot.sendMessage(chatId, `⏳ <b>Loading ${storeName}...</b>\n\n<code>[░░░░░░░░░░] 20% (Menghubungkan database)</code>`, {
+    loadingMsg = await bot.sendMessage(chatId, `⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■□□□□□□□□] 20%</code>`, {
       parse_mode: 'HTML',
     });
   } catch (e) {
@@ -68,7 +67,7 @@ async function handleStart(bot, msg) {
   await new Promise(r => setTimeout(r, 450));
   if (loadingMsg) {
     try {
-      await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[██████░░░░] 60% (Sinkronisasi stok)</code>`, {
+      await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■■■■■□□□□] 60%</code>`, {
         chat_id: chatId,
         message_id: loadingMsg.message_id,
         parse_mode: 'HTML',
@@ -82,7 +81,7 @@ async function handleStart(bot, msg) {
   await new Promise(r => setTimeout(r, 450));
   if (loadingMsg) {
     try {
-      await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[██████████] 100% (Toko Siap!)</code>`, {
+      await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■■■■■■■■■] 100%</code>`, {
         chat_id: chatId,
         message_id: loadingMsg.message_id,
         parse_mode: 'HTML',

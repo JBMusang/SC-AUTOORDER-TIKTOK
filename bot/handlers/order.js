@@ -43,14 +43,17 @@ async function handleBeli(bot, chatId, messageId) {
     getStockCount('tua',  false),
   ]);
 
-  const text = `🛒 <b>Beli Akun TikTok</b>
+  const text = `🛒 <b>Pilih Kategori Akun TikTok</b>
 
-Pilih tipe akun yang kamu inginkan:
+<blockquote>Silakan pilih umur akun TikTok yang Anda butuhkan di bawah ini:</blockquote>
 
-<blockquote>🧒 Akun Muda Garansi: <b>${mg} akun</b>
-🧒 Akun Muda No Garansi: <b>${mn} akun</b>
-👴 Akun Tua Garansi: <b>${tg} akun</b>
-👴 Akun Tua No Garansi: <b>${tn} akun</b></blockquote>`;
+• 🧒 <b>Akun Muda</b>
+<i>Akun fresh (baru dibuat), sangat cocok untuk memulai branding baru dari nol dengan harga lebih terjangkau.</i>
+📈 Stok Tersedia: <b>Garansi (${mg})</b> | <b>No Garansi (${mn})</b>
+
+• 👴 <b>Akun Tua</b>
+<i>Akun berumur/lama (lebih kuat & matang), sangat ideal untuk kebutuhan stabilitas algoritma & optimasi lebih aman.</i>
+📈 Stok Tersedia: <b>Garansi (${tg})</b> | <b>No Garansi (${tn})</b>`;
 
   const keyboard = {
     inline_keyboard: [
@@ -68,18 +71,21 @@ Pilih tipe akun yang kamu inginkan:
 // ─── STEP 2: Pilih garansi ────────────────────────────────────────────────────
 async function handleSelectType(bot, chatId, messageId, type) {
   getSession(chatId).type = type;
-  const typeName = type === 'muda' ? '🧒 Akun Muda' : '👴 Akun Tua';
+  const typeName = type === 'muda' ? 'Akun Muda' : 'Akun Tua';
 
   const prices = await getPrices();
   const pG  = prices[getPriceKey(type, true)];
   const pNG = prices[getPriceKey(type, false)];
 
-  const text = `${typeName}
+  const text = `🛡️ <b>Pilihan Proteksi Garansi (${typeName})</b>
 
-Pilih jenis garansi:
+<blockquote>Silakan pilih jenis garansi yang Anda inginkan:</blockquote>
 
-<blockquote>✅ <b>Garansi</b> — Rp ${formatRupiah(pG)}/akun
-❌ <b>No Garansi</b> — Rp ${formatRupiah(pNG)}/akun</blockquote>`;
+• ✅ <b>Dengan Garansi</b> — <code>Rp ${formatRupiah(pG)} /akun</code>
+<i>Mendapatkan jaminan ganti baru jika akun mengalami masalah dalam masa klaim aktif.</i>
+
+• ❌ <b>Tanpa Garansi</b> — <code>Rp ${formatRupiah(pNG)} /akun</code>
+<i>Dijual apa adanya tanpa jaminan pengembalian atau penggantian (non-refundable).</i>`;
 
   const keyboard = {
     inline_keyboard: [
@@ -195,15 +201,17 @@ async function handleConfirmOrder(bot, chatId, messageId, from) {
     const typeName    = type === 'muda' ? 'Akun Muda' : 'Akun Tua';
     const garansiName = garansi ? 'Garansi' : 'No Garansi';
 
-    const text = `💳 <b>Scan QRIS untuk Membayar</b>
+    const text = `💳 <b>Invoice Pembayaran QRIS (Pakasir)</b>
 
-<blockquote>📦 ${qty}x ${typeName} ${garansiName}
-💵 Total: Rp ${formatRupiah(totalPrice)}</blockquote>
+<blockquote>📦 <b>Detail Pesanan:</b>
+• Produk: <b>${qty}x TikTok ${typeName} (${garansiName})</b>
+• Total Tagihan: <code>Rp ${formatRupiah(totalPrice)}</code></blockquote>
 
-🔗 <i>Atau bayar via link:</i> <a href="${payment_url}">Klik di Sini</a>
+📲 <b>Cara Pembayaran:</b>
+1. Scan kode QR di atas menggunakan e-Wallet (Gopay/OVO/Dana/LinkAja) atau Mobile Banking Anda.
+2. <i>Atau klik link pembayaran langsung:</i> <a href="${payment_url}">Klik di Sini</a>.
 
-<i>⚠️ QRIS berlaku 30 menit</i>
-<i>📦 Akun otomatis dikirim setelah bayar</i>`;
+⚠️ <b>Penting:</b> Kode QR ini hanya berlaku selama <b>30 menit</b>. Setelah transfer berhasil, akun akan dikirim **detik itu juga** melalui chat ini!`;
 
     const keyboard = {
       inline_keyboard: [
