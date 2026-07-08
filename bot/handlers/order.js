@@ -43,12 +43,15 @@ async function handleBeli(bot, chatId, messageId) {
     getStockCount('tua',  false),
   ]);
 
-  const text = `🛒 <b>Pilih Kategori Akun</b>
+  const text = `🛒 <b>Pilih Kategori Akun TikTok</b>
 
-Pilih jenis akun TikTok yang Anda butuhkan:
+Silakan pilih kategori umur akun yang Anda butuhkan:
 
-• 🧒 <b>Akun Muda</b>: Stok (${mg} G | ${mn} NG)
-• 👴 <b>Akun Tua</b>: Stok (${tg} G | ${tn} NG)`;
+• 🧒 <b>Akun Muda</b> (Fresh / Baru)
+Stok saat ini: <b>Garansi (${mg})</b> | <b>No Garansi (${mn})</b>
+
+• 👴 <b>Akun Tua</b> (Berumur / Kuat)
+Stok saat ini: <b>Garansi (${tg})</b> | <b>No Garansi (${tn})</b>`;
 
   const keyboard = {
     inline_keyboard: [
@@ -72,10 +75,15 @@ async function handleSelectType(bot, chatId, messageId, type) {
   const pG  = prices[getPriceKey(type, true)];
   const pNG = prices[getPriceKey(type, false)];
 
-  const text = `🛡️ <b>Pilih Jenis Garansi (${typeName})</b>
+  const text = `🛡️ <b>Pilih Tipe Garansi (${typeName})</b>
 
-• ✅ <b>Garansi</b>: Rp ${formatRupiah(pG)}/akun
-• ❌ <b>No Garansi</b>: Rp ${formatRupiah(pNG)}/akun`;
+Silakan pilih opsi garansi untuk keamanan akun Anda:
+
+• ✅ <b>Dengan Garansi</b> — Rp ${formatRupiah(pG)}/akun
+<i>Mendapatkan proteksi klaim ganti baru jika bermasalah.</i>
+
+• ❌ <b>Tanpa Garansi</b> — Rp ${formatRupiah(pNG)}/akun
+<i>Dijual apa adanya tanpa garansi (harga lebih hemat).</i>`;
 
   const keyboard = {
     inline_keyboard: [
@@ -191,13 +199,16 @@ async function handleConfirmOrder(bot, chatId, messageId, from) {
     const typeName    = type === 'muda' ? 'Akun Muda' : 'Akun Tua';
     const garansiName = garansi ? 'Garansi' : 'No Garansi';
 
-    const text = `💳 <b>Pembayaran QRIS (Pakasir)</b>
+    const text = `💳 <b>Detail Pembayaran QRIS (Pakasir)</b>
 
-<blockquote>📦 Order: <b>${qty}x TikTok ${typeName} (${garansiName})</b>
-💵 Total: <b>Rp ${formatRupiah(totalPrice)}</b></blockquote>
+<blockquote>📦 <b>Detail Pesanan:</b>
+• Produk: <b>${qty}x TikTok ${typeName} (${garansiName})</b>
+• Total Tagihan: <code>Rp ${formatRupiah(totalPrice)}</code></blockquote>
 
-Scan QRIS di atas untuk membayar.
-Atau bayar via link: <a href="${payment_url}">Klik di Sini</a>`;
+Silakan scan kode QRIS di atas untuk membayar, atau gunakan link langsung berikut:
+🔗 <a href="${payment_url}">Klik Link Pembayaran</a>
+
+<i>*Akun otomatis dikirim dalam hitungan detik setelah transfer sukses. QRIS berlaku 30 menit.</i>`;
 
     const keyboard = {
       inline_keyboard: [

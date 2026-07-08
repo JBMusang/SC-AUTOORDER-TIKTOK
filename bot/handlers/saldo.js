@@ -11,11 +11,14 @@ async function handleSaldo(bot, chatId, messageId, from) {
   const orders = user?.totalOrders || 0;
   const name   = escapeHTML(from?.first_name || from?.username || 'Pengguna');
 
-  const text = `💼 <b>Saldo Kamu</b>
+  const text = `💼 <b>E-Wallet & Saldo Kamu</b>
 
-👤 User: <b>${name}</b>
-💵 Saldo: <b>Rp ${formatRupiah(saldo)}</b>
-📦 Transaksi: <b>${orders} order</b>`;
+<blockquote>👤 <b>Informasi Pengguna:</b>
+• Akun: <b>${name}</b>
+• Saldo Aktif: <code>Rp ${formatRupiah(saldo)}</code>
+• Total Order: <b>${orders} sukses</b></blockquote>
+
+Saldo dapat digunakan untuk membeli stok akun secara instan tanpa perlu scan QRIS lagi.`;
 
   const keyboard = {
     inline_keyboard: [

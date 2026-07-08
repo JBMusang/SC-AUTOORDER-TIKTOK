@@ -18,7 +18,13 @@ const REPLY_KEYBOARD = {
 function buildCaption(name) {
   return `✨ <b>Halo, ${escapeHTML(name)}! Selamat datang di ${escapeHTML(storeName)}</b>
 
-🏪 Toko penjualan akun TikTok otomatis.
+🏪 Toko Akun TikTok otomatis terpercaya dengan pengiriman instan 24/7.
+
+<blockquote>⚡ <b>Info Layanan:</b>
+• Menyediakan Akun TikTok Siap Pakai (Muda & Tua)
+• Mendukung pembayaran otomatis via QRIS & Saldo
+• Pesanan langsung dikirim detik itu juga setelah bayar</blockquote>
+
 Silakan klik tombol di bawah untuk mulai memesan! 👇`;
 }
 

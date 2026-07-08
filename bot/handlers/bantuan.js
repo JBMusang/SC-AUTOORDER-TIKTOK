@@ -4,9 +4,13 @@ const storeName = process.env.STORE_NAME || 'PanzzStore';
 async function handleBantuan(bot, chatId, messageId) {
   const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
 
-const text = `🆘 <b>Pusat Bantuan ${escapeHTML(storeName)}</b>
+  const text = `🆘 <b>Pusat Bantuan & FAQ</b>
 
-Jika mengalami kendala transaksi atau ada pertanyaan seputar stok, silakan hubungi admin kami:
+Sebelum menghubungi admin, berikut info cepat yang sering ditanyakan:
+• <b>Kapan dikirim?</b> Akun dikirim otomatis 1-3 detik setelah bayar.
+• <b>Apakah ada garansi?</b> Ya, tersedia opsi Garansi untuk klaim jika bermasalah.
+
+Jika butuh bantuan manual atau laporan transaksi, hubungi admin kami:
 📞 Admin: @${escapeHTML(adminUsername)}`;
 
   const keyboard = {
