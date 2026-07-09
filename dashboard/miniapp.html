@@ -151,8 +151,9 @@
 
           <!-- Buttons Group -->
           <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
-            <button class="btn-secondary full" onclick="previewBroadcast()" id="btnPreviewBroadcast" style="margin: 0; flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border);">👁️ Preview</button>
-            <button class="btn-primary full" onclick="sendBroadcast()" id="btnSendBroadcast" style="margin: 0; flex: 2;">🚀 Kirim Broadcast</button>
+            <button class="btn-secondary" onclick="resetBroadcastForm()" style="margin: 0; background: rgba(255,82,82,0.12); color: #ff5252; border: 1px solid rgba(255,82,82,0.25); padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; outline: none; cursor: pointer; transition: all 0.25s;" onmouseover="this.style.background='rgba(255,82,82,0.22)'" onmouseout="this.style.background='rgba(255,82,82,0.12)'">✕ Batal</button>
+            <button class="btn-secondary" onclick="previewBroadcast()" id="btnPreviewBroadcast" style="margin: 0; flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border);">👁️ Preview</button>
+            <button class="btn-primary" onclick="sendBroadcast()" id="btnSendBroadcast" style="margin: 0; flex: 2;">🚀 Kirim Broadcast</button>
           </div>
         </div>
       </div>

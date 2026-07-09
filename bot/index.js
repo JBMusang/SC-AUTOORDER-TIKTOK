@@ -414,7 +414,12 @@ bot.on('callback_query', async (query) => {
         session.waitingForAdminUserMsg = false;
         session.waitingForSearchUser = false;
         session.waitingForBroadcastMsg = true;
-        await bot.sendMessage(chatId, '📢 <b>Kirim Broadcast ke Seluruh Pengguna</b>\n\nSilakan ketik pesan broadcast Anda di sini (Mendukung HTML):', { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, '📢 <b>Kirim Broadcast ke Seluruh Pengguna</b>\n\nSilakan ketik pesan broadcast Anda di sini (Mendukung HTML):', {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[{ text: '« Batal', callback_data: 'admin_cancel_input' }]]
+          }
+        });
         break;
       }
 
@@ -451,7 +456,21 @@ bot.on('callback_query', async (query) => {
 
       case data === 'admin_search_user_init': {
         session.waitingForSearchUser = true;
-        await bot.sendMessage(chatId, '🔍 <b>Kelola Saldo User</b>\n\nSilakan kirimkan <b>Chat ID Telegram</b> user yang ingin Anda cari:');
+        await bot.sendMessage(chatId, '🔍 <b>Kelola Saldo User</b>\n\nSilakan kirimkan <b>Chat ID Telegram</b> user yang ingin Anda cari:', {
+          reply_markup: {
+            inline_keyboard: [[{ text: '« Batal', callback_data: 'admin_cancel_input' }]]
+          }
+        });
+        break;
+      }
+
+      case data === 'admin_cancel_input': {
+        session.waitingForAdminUserMsg = false;
+        session.waitingForAddSaldo = false;
+        session.waitingForSubSaldo = false;
+        session.waitingForSearchUser = false;
+        session.waitingForBroadcastMsg = false;
+        await bot.sendMessage(chatId, '❌ Aksi admin dibatalkan.');
         break;
       }
 
@@ -498,21 +517,35 @@ bot.on('callback_query', async (query) => {
       case data.startsWith('admin_chat_user_'): {
         const targetUserId = data.split('_')[3];
         session.waitingForAdminUserMsg = targetUserId;
-        await bot.sendMessage(chatId, `💬 <b>Kirim pesan langsung ke user (ID: ${targetUserId}):</b>\n\nTulis pesan yang ingin Anda kirimkan. Pesan akan diteruskan oleh bot ke chat user.`);
+        await bot.sendMessage(chatId, `💬 <b>Kirim pesan langsung ke user (ID: ${targetUserId}):</b>\n\nTulis pesan yang ingin Anda kirimkan. Pesan akan diteruskan oleh bot ke chat user.`, {
+          reply_markup: {
+            inline_keyboard: [[{ text: '« Batal', callback_data: 'admin_cancel_input' }]]
+          }
+        });
         break;
       }
 
       case data.startsWith('admin_add_saldo_'): {
         const targetUserId = data.split('_')[3];
         session.waitingForAddSaldo = targetUserId;
-        await bot.sendMessage(chatId, `➕ <b>Tambah Saldo User (ID: ${targetUserId}):</b>\n\nSilakan ketik jumlah saldo yang ingin <b>ditambahkan</b> (contoh: <code>10000</code> atau <code>50000</code>):`, { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, `➕ <b>Tambah Saldo User (ID: ${targetUserId}):</b>\n\nSilakan ketik jumlah saldo yang ingin <b>ditambahkan</b> (contoh: <code>10000</code> atau <code>50000</code>):`, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[{ text: '« Batal', callback_data: 'admin_cancel_input' }]]
+          }
+        });
         break;
       }
 
       case data.startsWith('admin_sub_saldo_'): {
         const targetUserId = data.split('_')[3];
         session.waitingForSubSaldo = targetUserId;
-        await bot.sendMessage(chatId, `➖ <b>Kurangi Saldo User (ID: ${targetUserId}):</b>\n\nSilakan ketik jumlah saldo yang ingin <b>dikurangi</b> (contoh: <code>10000</code> atau <code>50000</code>):`, { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, `➖ <b>Kurangi Saldo User (ID: ${targetUserId}):</b>\n\nSilakan ketik jumlah saldo yang ingin <b>dikurangi</b> (contoh: <code>10000</code> atau <code>50000</code>):`, {
+          parse_mode: 'HTML',
+          reply_markup: {
+            inline_keyboard: [[{ text: '« Batal', callback_data: 'admin_cancel_input' }]]
+          }
+        });
         break;
       }
 

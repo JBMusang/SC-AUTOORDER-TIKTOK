@@ -931,6 +931,14 @@ async function previewBroadcast() {
   }
 }
 
+function resetBroadcastForm() {
+  document.getElementById('broadcastMsg').value = '';
+  document.getElementById('broadcastImgUrl').value = '';
+  document.getElementById('broadcastBtnText').value = '';
+  document.getElementById('broadcastBtnUrl').value = '';
+  showToast('🧹 Input broadcast di-reset!');
+}
+
 // ─── TOAST ────────────────────────────────────────────────────────────────────
 let toastTimer;
 function showToast(msg) {
