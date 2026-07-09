@@ -118,10 +118,42 @@
           <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
             Kirim pengumuman / pesan promosi ke seluruh pengguna terdaftar di bot Telegram Anda. Mendukung tag HTML standar (seperti <code>&lt;b&gt;tebal&lt;/b&gt;</code>, <code>&lt;i&gt;miring&lt;/i&gt;</code>, <code>&lt;code&gt;kode&lt;/code&gt;</code>).
           </p>
-          <div class="form-group" style="margin: 0;">
+          
+          <!-- Pesan Utama -->
+          <div class="form-group" style="margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Pesan Utama</label>
             <textarea id="broadcastMsg" placeholder="Tulis pesan broadcast di sini..." rows="4" style="width: 100%; padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: #fff; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box; outline: none; transition: border-color 0.25s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"></textarea>
           </div>
-          <button class="btn-primary full" onclick="sendBroadcast()" id="btnSendBroadcast" style="margin: 0;">🚀 Kirim Broadcast</button>
+
+          <!-- URL Gambar -->
+          <div class="form-group" style="margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">URL Gambar / Foto (Opsional)</label>
+            <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
+              <input type="text" id="broadcastImgUrl" placeholder="https://example.com/banner.jpg" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
+            </div>
+          </div>
+
+          <!-- Tombol Aksi Kustom -->
+          <div style="display: flex; gap: 0.5rem; width: 100%;">
+            <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Teks Tombol (Opsional)</label>
+              <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
+                <input type="text" id="broadcastBtnText" placeholder="Hubungi Admin / Beli" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
+              </div>
+            </div>
+            <div class="form-group" style="margin: 0; flex: 1.5; display: flex; flex-direction: column; gap: 0.5rem;">
+              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Link URL Tombol (Opsional)</label>
+              <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
+                <input type="text" id="broadcastBtnUrl" placeholder="https://t.me/username" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Buttons Group -->
+          <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
+            <button class="btn-secondary full" onclick="previewBroadcast()" id="btnPreviewBroadcast" style="margin: 0; flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border);">👁️ Preview</button>
+            <button class="btn-primary full" onclick="sendBroadcast()" id="btnSendBroadcast" style="margin: 0; flex: 2;">🚀 Kirim Broadcast</button>
+          </div>
         </div>
       </div>
 

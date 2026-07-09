@@ -355,22 +355,62 @@ router.post('/users/:id/balance', adminAuth, async (req, res) => {
 // ─── BROADCAST MESSAGE ────────────────────────────────────────────────────────
 router.post('/broadcast', adminAuth, async (req, res) => {
   try {
-    const { message } = req.body;
+    const { message, imageUrl, buttonText, buttonUrl, preview, adminTelegramId } = req.body;
     if (!message || message.trim() === '') {
       return res.status(400).json({ error: 'Pesan broadcast tidak boleh kosong' });
     }
 
     const botModule = require('../../bot/index');
-    const users = await getAllUsers();
     
+    // Construct inline keyboard options if provided
+    let reply_markup = null;
+    if (buttonText && buttonUrl && buttonText.trim() !== '' && buttonUrl.trim() !== '') {
+      reply_markup = {
+        inline_keyboard: [[{ text: buttonText, url: buttonUrl }]]
+      };
+    }
+
+    // Helper to send message to a single user
+    const sendMessageToUser = async (uId) => {
+      if (imageUrl && imageUrl.trim() !== '') {
+        const opts = {
+          caption: message,
+          parse_mode: 'HTML',
+          ...(reply_markup ? { reply_markup } : {})
+        };
+        await botModule.bot.sendPhoto(uId, imageUrl, opts);
+      } else {
+        const opts = {
+          parse_mode: 'HTML',
+          ...(reply_markup ? { reply_markup } : {})
+        };
+        await botModule.bot.sendMessage(uId, message, opts);
+      }
+    };
+
+    // If it's a preview request
+    if (preview) {
+      if (!adminTelegramId) {
+        return res.status(400).json({ error: 'ID Telegram Admin diperlukan untuk preview' });
+      }
+      try {
+        await sendMessageToUser(String(adminTelegramId));
+        return res.json({ success: true, message: 'Preview terkirim!' });
+      } catch (err) {
+        console.error('Preview broadcast failed:', err.message);
+        return res.status(400).json({ error: `Gagal mengirim preview: ${err.message}` });
+      }
+    }
+
+    // Otherwise, send broadcast to all users
+    const users = await getAllUsers();
     let successCount = 0;
     let failCount = 0;
 
-    // Send broadcast to all users
     const sendPromises = users.map(async (u) => {
       try {
         const uId = String(u.telegramId || u.id);
-        await botModule.bot.sendMessage(uId, message, { parse_mode: 'HTML' });
+        await sendMessageToUser(uId);
         successCount++;
       } catch (err) {
         console.error(`Broadcast failed for user ${u.telegramId || u.id}:`, err.message);

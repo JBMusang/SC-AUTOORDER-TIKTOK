@@ -823,11 +823,23 @@ async function saveUserSaldo() {
 // ─── BROADCAST ────────────────────────────────────────────────────────────────
 async function sendBroadcast() {
   const msgEl = document.getElementById('broadcastMsg');
+  const imgUrlEl = document.getElementById('broadcastImgUrl');
+  const btnTextEl = document.getElementById('broadcastBtnText');
+  const btnUrlEl = document.getElementById('broadcastBtnUrl');
   const btnEl = document.getElementById('btnSendBroadcast');
+
   const message = msgEl.value.trim();
+  const imageUrl = imgUrlEl.value.trim();
+  const buttonText = btnTextEl.value.trim();
+  const buttonUrl = btnUrlEl.value.trim();
 
   if (!message) {
     showToast('⚠️ Silakan isi pesan broadcast terlebih dahulu!');
+    return;
+  }
+
+  if ((buttonText && !buttonUrl) || (!buttonText && buttonUrl)) {
+    showToast('⚠️ Jika ingin menggunakan tombol aksi, isi Teks Tombol DAN Link URL secara bersamaan!');
     return;
   }
 
@@ -841,13 +853,16 @@ async function sendBroadcast() {
   try {
     const res = await apiFetch('/api/admin/broadcast', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, imageUrl, buttonText, buttonUrl }),
     });
 
     const data = await res.json();
     if (res.ok && data.success) {
       showToast(`✅ Broadcast terkirim ke ${data.successCount} user!`);
       msgEl.value = '';
+      imgUrlEl.value = '';
+      btnTextEl.value = '';
+      btnUrlEl.value = '';
     } else {
       showToast(`❌ Gagal: ${data.error || 'Terjadi kesalahan'}`);
     }
@@ -856,6 +871,63 @@ async function sendBroadcast() {
   } finally {
     btnEl.disabled = false;
     btnEl.textContent = '🚀 Kirim Broadcast';
+  }
+}
+
+async function previewBroadcast() {
+  const msgEl = document.getElementById('broadcastMsg');
+  const imgUrlEl = document.getElementById('broadcastImgUrl');
+  const btnTextEl = document.getElementById('broadcastBtnText');
+  const btnUrlEl = document.getElementById('broadcastBtnUrl');
+  const btnEl = document.getElementById('btnPreviewBroadcast');
+
+  const message = msgEl.value.trim();
+  const imageUrl = imgUrlEl.value.trim();
+  const buttonText = btnTextEl.value.trim();
+  const buttonUrl = btnUrlEl.value.trim();
+
+  if (!message) {
+    showToast('⚠️ Silakan isi pesan broadcast terlebih dahulu!');
+    return;
+  }
+
+  if ((buttonText && !buttonUrl) || (!buttonText && buttonUrl)) {
+    showToast('⚠️ Isi Teks Tombol DAN Link URL untuk mencoba tombol aksi!');
+    return;
+  }
+
+  if (!user || !user.id) {
+    showToast('❌ Gagal mendapatkan ID Telegram Anda untuk preview.');
+    return;
+  }
+
+  btnEl.disabled = true;
+  btnEl.textContent = '⏳...';
+
+  try {
+    const res = await apiFetch('/api/admin/broadcast', {
+      method: 'POST',
+      body: JSON.stringify({
+        message,
+        imageUrl,
+        buttonText,
+        buttonUrl,
+        preview: true,
+        adminTelegramId: user.id
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('✅ Preview terkirim ke Telegram Anda!');
+    } else {
+      showToast(`❌ Preview gagal: ${data.error || 'Terjadi kesalahan'}`);
+    }
+  } catch (e) {
+    showToast(`❌ Error: ${e.message}`);
+  } finally {
+    btnEl.disabled = false;
+    btnEl.textContent = '👁️ Preview';
   }
 }
 
