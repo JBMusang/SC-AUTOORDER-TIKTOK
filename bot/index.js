@@ -196,14 +196,36 @@ bot.on('message', async (msg) => {
     // 5. Waiting for Search User
     if (session.waitingForSearchUser) {
       session.waitingForSearchUser = false;
-      const targetUserId = text.trim();
+      const query = text.trim();
       try {
-        const { getUser } = require('../server/firebase');
+        const { getUser, getUserByUsername } = require('../server/firebase');
         const { formatRupiah } = require('./utils');
-        const user = await getUser(targetUserId);
         
-        if (!user) {
-          await bot.sendMessage(chatId, '❌ Pengguna tidak ditemukan di database. Pastikan Chat ID benar.');
+        let user = null;
+        let targetUserId = null;
+        
+        // If query starts with @ or is not a number, search by username
+        if (query.startsWith('@') || isNaN(parseInt(query))) {
+          user = await getUserByUsername(query);
+          if (user) {
+            targetUserId = String(user.telegramId || user.id);
+          }
+        } else {
+          // Try searching by Chat ID first
+          user = await getUser(query);
+          if (user) {
+            targetUserId = query;
+          } else {
+            // Fallback: try searching by username
+            user = await getUserByUsername(query);
+            if (user) {
+              targetUserId = String(user.telegramId || user.id);
+            }
+          }
+        }
+        
+        if (!user || !targetUserId) {
+          await bot.sendMessage(chatId, '❌ Pengguna tidak ditemukan di database. Pastikan Chat ID atau Username benar.');
           return;
         }
         
@@ -454,7 +476,8 @@ bot.on('callback_query', async (query) => {
 
       case data === 'admin_search_user_init': {
         session.waitingForSearchUser = true;
-        await bot.sendMessage(chatId, '🔍 <b>Kelola Saldo User</b>\n\nSilakan kirimkan <b>Chat ID Telegram</b> user yang ingin Anda cari:', {
+        await bot.sendMessage(chatId, '🔍 <b>Kelola Saldo User</b>\n\nSilakan kirimkan <b>Chat ID</b> atau <b>Username Telegram</b> (@username) user yang ingin Anda cari:', {
+          parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [[{ text: '« Batal', callback_data: 'admin_cancel_input' }]]
           }

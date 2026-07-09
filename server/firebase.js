@@ -85,6 +85,21 @@ async function getUserOrCreate(telegramId, username, firstName) {
   return user;
 }
 
+async function getUserByUsername(username) {
+  const cleanedUsername = username.replace(/^@/, '').trim();
+  if (!cleanedUsername) return null;
+
+  const snapshot = await db.collection('users')
+    .where('username', '==', cleanedUsername)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) return null;
+  const doc = snapshot.docs[0];
+  const telegramId = doc.id;
+  return getUser(telegramId);
+}
+
 async function updateUserSaldo(telegramId, amount) {
   await db.collection('users').doc(String(telegramId)).update({
     saldo: admin.firestore.FieldValue.increment(amount),
@@ -364,7 +379,7 @@ async function getUserIdFromHelpTicket(adminMessageId) {
 
 module.exports = {
   db, admin,
-  getUser, createUser, getUserOrCreate, updateUserSaldo, getAllUsers, setUserSaldo,
+  getUser, getUserByUsername, createUser, getUserOrCreate, updateUserSaldo, getAllUsers, setUserSaldo,
   getAvailableAccounts, getStockCount, getStockItems, getAllStock, markAccountsSold, addAccount, deleteStockCategory,
   createOrder, getOrder, getOrderByPakasirId, updateOrderStatus, getAllOrders, getOrderStats,
   getPrices, updatePrices, getPriceKey,
