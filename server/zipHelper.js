@@ -36,7 +36,13 @@ async function createZipFromAccounts(accounts, orderId) {
     const destPath = path.join(accountDir, fileName);
 
     try {
-      if (acc.telegramFileId && downloadFileFromTelegram) {
+      if (acc.storagePath && (process.env.VERCEL === '1' || acc.storagePath.startsWith('accounts/'))) {
+        // ─── BARU: Download dari Firebase Storage (Super Cepat & Tanpa Limit) ────
+        console.log(`📥 Firebase Storage download: ${fileName} (Path: ${acc.storagePath})`);
+        const { admin } = require('./firebase');
+        const bucket = admin.storage().bucket();
+        await bucket.file(acc.storagePath).download({ destination: destPath });
+      } else if (acc.telegramFileId && downloadFileFromTelegram) {
         // ─── BARU: Download dari Telegram Storage ────────────────────────────
         console.log(`📥 Telegram download: ${fileName} (ID: ${acc.telegramFileId})`);
         await downloadFileFromTelegram(acc.telegramFileId, destPath);

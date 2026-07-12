@@ -189,11 +189,21 @@ router.post('/stock/upload', adminAuth, upload.array('files', 500), async (req, 
           throw new Error('Duplicate account file detected');
         }
 
-        // Upload langsung ke Telegram Storage
-        const telegramFileId = await uploadFileToTelegram(file.path, file.originalname);
+        let telegramFileId = '';
+        let storagePath = '';
 
-        // Simpan ke Firestore dengan status available, telegramFileId terisi, storagePath kosong
-        await addAccount(type, garansiBool, telegramFileId, file.originalname, '', fileHash);
+        if (process.env.VERCEL === '1') {
+          // Upload ke Firebase Storage (koneksi se-region, super cepat & tanpa limit 429)
+          storagePath = `accounts/${uuidv4()}_${file.originalname}`;
+          const { uploadFileToStorage } = require('../firebase');
+          await uploadFileToStorage(file.path, storagePath);
+        } else {
+          // Upload ke Telegram Storage (untuk VPS/Lokal fallback)
+          telegramFileId = await uploadFileToTelegram(file.path, file.originalname);
+        }
+
+        // Simpan ke Firestore dengan status available
+        await addAccount(type, garansiBool, telegramFileId, file.originalname, storagePath, fileHash);
 
         results.push({ fileName: file.originalname });
       } catch (err) {
