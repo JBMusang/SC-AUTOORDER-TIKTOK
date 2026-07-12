@@ -374,35 +374,69 @@ async function deliverOrder(bot, orderId) {
     let downloadUrl;
     const isVercel = process.env.VERCEL === '1';
 
-    if (isVercel || process.env.USE_FIREBASE_STORAGE === 'true') {
-      console.log('☁️ Mengunggah file ZIP ke Firebase Storage...');
-      const { uploadFileToStorage } = require('../../server/firebase');
-      downloadUrl = await uploadFileToStorage(tempZipPath, `downloads/${finalZipName}`);
+    if (isVercel) {
+      // Pada Vercel, kita hindari penggunaan Firebase Storage berbayar (Blaze plan).
+      // Kirim pesan konfirmasi dulu, kemudian kirim dokumen ZIP langsung ke chat Telegram user.
+      const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
+      const deliveryText = `✅ <b>Order Berhasil!</b>
+      
+<blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
+🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
+
+File akun Anda dikirimkan di bawah ini secara langsung... 👇`;
+
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
+        ]
+      };
+
+      await bot.sendMessage(chatId, deliveryText, {
+        parse_mode: 'HTML',
+        reply_markup: inlineKeyboard
+      });
+
+      console.log('📤 Mengirim dokumen zip secara langsung ke chat Telegram...');
+      await bot.sendDocument(chatId, fs.createReadStream(tempZipPath), {
+        caption: `📦 <b>File Akun Anda (${qtyCount})</b>\n🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code>\n\n<i>Terima kasih sudah belanja di ${storeName}! 🙏</i>`,
+        parse_mode: 'HTML',
+      }, {
+        filename: finalZipName,
+        contentType: 'application/zip'
+      });
+
       cleanupZip(tempZipPath);
-      console.log('☁️ Upload berhasil. URL:', downloadUrl);
     } else {
-      // Tentukan path folder downloads publik (Lokal VPS)
-      const destDir = path.join(__dirname, '../../storage/downloads/');
-      if (!fs.existsSync(destDir)) {
-        fs.mkdirSync(destDir, { recursive: true });
+      if (process.env.USE_FIREBASE_STORAGE === 'true') {
+        console.log('☁️ Mengunggah file ZIP ke Firebase Storage...');
+        const { uploadFileToStorage } = require('../../server/firebase');
+        downloadUrl = await uploadFileToStorage(tempZipPath, `downloads/${finalZipName}`);
+        cleanupZip(tempZipPath);
+        console.log('☁️ Upload berhasil. URL:', downloadUrl);
+      } else {
+        // Tentukan path folder downloads publik (Lokal VPS)
+        const destDir = path.join(__dirname, '../../storage/downloads/');
+        if (!fs.existsSync(destDir)) {
+          fs.mkdirSync(destDir, { recursive: true });
+        }
+        const finalZipPath = path.join(destDir, finalZipName);
+        
+        // Pindahkan file zip ke folder publik
+        fs.copyFileSync(tempZipPath, finalZipPath);
+        cleanupZip(tempZipPath);
+        
+        // Buat link download
+        let baseUrl = process.env.BASE_URL || '';
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = `https://${baseUrl}`;
+        }
+        downloadUrl = `${baseUrl}/downloads/${finalZipName}`;
       }
-      const finalZipPath = path.join(destDir, finalZipName);
+
+      const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
       
-      // Pindahkan file zip ke folder publik
-      fs.copyFileSync(tempZipPath, finalZipPath);
-      cleanupZip(tempZipPath);
+      const deliveryText = `✅ <b>Order Berhasil!</b>
       
-      // Buat link download
-      let baseUrl = process.env.BASE_URL || '';
-      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-        baseUrl = `https://${baseUrl}`;
-      }
-      downloadUrl = `${baseUrl}/downloads/${finalZipName}`;
-    }
-    const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
-    
-    const deliveryText = `✅ <b>Order Berhasil!</b>
-    
 <blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
 🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
 
@@ -411,17 +445,18 @@ Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsun
 
 <i>Terima kasih sudah belanja di ${storeName}! 🙏</i>`;
 
-    const inlineKeyboard = {
-      inline_keyboard: [
-        [{ text: '📥 Download File Akun (.zip)', url: downloadUrl }],
-        [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
-      ]
-    };
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [{ text: '📥 Download File Akun (.zip)', url: downloadUrl }],
+          [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
+        ]
+      };
 
-    await bot.sendMessage(chatId, deliveryText, {
-      parse_mode: 'HTML',
-      reply_markup: inlineKeyboard
-    });
+      await bot.sendMessage(chatId, deliveryText, {
+        parse_mode: 'HTML',
+        reply_markup: inlineKeyboard
+      });
+    }
 
     bot.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
 

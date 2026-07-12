@@ -381,6 +381,24 @@ async function getUserIdFromHelpTicket(adminMessageId) {
   return doc.exists ? doc.data().userId : null;
 }
 
+let resolvedBucketName = null;
+function getFirebaseBucket() {
+  if (resolvedBucketName) {
+    return admin.storage().bucket(resolvedBucketName);
+  }
+
+  const envBucket = process.env.FIREBASE_STORAGE_BUCKET;
+  if (envBucket) {
+    resolvedBucketName = envBucket;
+  } else {
+    // Gunakan projectId dari inisialisasi SDK
+    const projectId = admin.app().options.credential?.projectId || process.env.FIREBASE_PROJECT_ID;
+    resolvedBucketName = projectId ? `${projectId}.appspot.com` : undefined;
+  }
+
+  return admin.storage().bucket(resolvedBucketName);
+}
+
 /**
  * Upload a local file to Firebase Storage and get a signed download URL (valid for 24h).
  * @param {string} localFilePath - Path of the file on local disk
@@ -388,14 +406,37 @@ async function getUserIdFromHelpTicket(adminMessageId) {
  * @returns {Promise<string>} Signed download URL
  */
 async function uploadFileToStorage(localFilePath, destinationPath) {
+  let bucket = getFirebaseBucket();
   try {
-    const bucket = admin.storage().bucket();
-    await bucket.upload(localFilePath, {
-      destination: destinationPath,
-      metadata: {
-        cacheControl: 'public, max-age=31536000',
+    try {
+      await bucket.upload(localFilePath, {
+        destination: destinationPath,
+        metadata: {
+          cacheControl: 'public, max-age=31536000',
+        }
+      });
+    } catch (uploadErr) {
+      // Jika error 404 (bucket tidak ditemukan) dan user tidak menyetting nama bucket kustom di env
+      const projectId = admin.app().options.credential?.projectId || process.env.FIREBASE_PROJECT_ID;
+      const defaultAppspotName = projectId ? `${projectId}.appspot.com` : '';
+      
+      if (uploadErr.message.includes('bucket does not exist') && bucket.name === defaultAppspotName) {
+        const newBucketName = `${projectId}.firebasestorage.app`;
+        console.log(`⚠️ Default bucket ${defaultAppspotName} tidak ditemukan. Otomatis beralih ke: ${newBucketName}`);
+        resolvedBucketName = newBucketName;
+        bucket = admin.storage().bucket(resolvedBucketName);
+        
+        // Coba upload ulang dengan nama bucket baru
+        await bucket.upload(localFilePath, {
+          destination: destinationPath,
+          metadata: {
+            cacheControl: 'public, max-age=31536000',
+          }
+        });
+      } else {
+        throw uploadErr;
       }
-    });
+    }
 
     const file = bucket.file(destinationPath);
     const [url] = await file.getSignedUrl({
@@ -417,5 +458,6 @@ module.exports = {
   createOrder, getOrder, getOrderByPakasirId, updateOrderStatus, getAllOrders, getOrderStats,
   getPrices, updatePrices, getPriceKey,
   saveHelpTicket, getUserIdFromHelpTicket,
+  getFirebaseBucket,
   uploadFileToStorage,
 };

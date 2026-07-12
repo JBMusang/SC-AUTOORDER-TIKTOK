@@ -191,19 +191,18 @@ router.post('/stock/upload', adminAuth, upload.array('files', 500), async (req, 
 
         let telegramFileId = '';
         let storagePath = '';
+        let fileContentBase64 = '';
 
-        if (process.env.VERCEL === '1') {
-          // Upload ke Firebase Storage (koneksi se-region, super cepat & tanpa limit 429)
-          storagePath = `accounts/${uuidv4()}_${file.originalname}`;
-          const { uploadFileToStorage } = require('../firebase');
-          await uploadFileToStorage(file.path, storagePath);
+        if (file.size < 1024 * 1024) {
+          // Jika di bawah 1MB, simpan sebagai Base64 di Firestore (100% Gratis & Instan!)
+          fileContentBase64 = fs.readFileSync(file.path).toString('base64');
         } else {
-          // Upload ke Telegram Storage (untuk VPS/Lokal fallback)
+          // Jika di atas 1MB, upload ke Telegram Storage (100% Gratis, Unlimited & Bebas Blaze Plan)
           telegramFileId = await uploadFileToTelegram(file.path, file.originalname);
         }
 
         // Simpan ke Firestore dengan status available
-        await addAccount(type, garansiBool, telegramFileId, file.originalname, storagePath, fileHash);
+        await addAccount(type, garansiBool, telegramFileId, file.originalname, storagePath, fileHash, fileContentBase64);
 
         results.push({ fileName: file.originalname });
       } catch (err) {
