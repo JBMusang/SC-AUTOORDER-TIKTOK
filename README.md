@@ -81,9 +81,15 @@ npm install
 
 1. Buka [Firebase Console](https://console.firebase.google.com).
 2. Buat project baru → aktifkan **Firestore Database** (mode production).
-3. Buka **Project Settings → Service Accounts**.
-4. Klik **Generate new private key** → file JSON terdownload.
-5. Rename file menjadi **`serviceAccountKey.json`** → letakkan di **folder utama** project.
+3. Aktifkan **Firebase Storage** → klik menu **Build** > **Storage** > klik **Get Started**.
+4. Aktifkan **Firestore API** di Google Cloud Console → buka link berikut (ganti `PROJECT_ID` dengan ID project Firebase kamu):
+   ```
+   https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID
+   ```
+   Lalu klik **Enable**. Tunggu 1-2 menit.
+5. Buka **Project Settings → Service Accounts**.
+6. Klik **Generate new private key** → file JSON terdownload.
+7. Rename file menjadi **`serviceAccountKey.json`** → letakkan di **folder utama** project (untuk lokal/VPS) atau simpan isinya untuk dipakai sebagai env variable di Vercel/Railway.
 
 ### 3. Setup Telegram Storage Channel ☁️
 
@@ -161,6 +167,67 @@ Khusus untuk **Firebase (karena `serviceAccountKey.json` di-ignore)**, Anda cuku
 
 ---
 
+## 🔺 Panduan Deploy di Vercel (Gratis)
+
+Bot ini sudah mendukung deployment di **Vercel Serverless**. Saat dideploy di Vercel, bot otomatis beralih dari mode polling ke **Webhook**, dan file download dikirim via **Firebase Storage** (bukan file lokal).
+
+### 1. Push ke GitHub
+- Buat repositori **Private** di GitHub.
+- Push seluruh kode project ke repositori tersebut.
+- File `.env` dan `serviceAccountKey.json` otomatis diabaikan oleh `.gitignore`.
+
+### 2. Setup Firebase (WAJIB)
+
+Sebelum deploy, pastikan kamu sudah melakukan **3 hal** ini di Firebase Console:
+
+1. **Aktifkan Firestore Database**
+   - Buka [Firebase Console](https://console.firebase.google.com) → pilih project → **Build** > **Firestore Database** → **Create Database**.
+
+2. **Aktifkan Firebase Storage**
+   - Buka **Build** > **Storage** → klik **Get Started**.
+
+3. **Aktifkan Firestore API di Google Cloud Console** ⚠️
+   - Buka link berikut (ganti `PROJECT_ID` dengan ID project Firebase kamu):
+     ```
+     https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID
+     ```
+   - Klik tombol **Enable**.
+   - Tunggu 1-2 menit sampai API terpropagasi.
+   - **Jika langkah ini dilewatkan**, bot akan error `PERMISSION_DENIED: Cloud Firestore API has not been used in project...`
+
+### 3. Hubungkan ke Vercel
+1. Login ke [Vercel](https://vercel.com) menggunakan akun GitHub.
+2. Klik **Add New** → **Project** → pilih repositori bot.
+3. Klik **Deploy**.
+
+### 4. Masukkan Environment Variables
+Buka **Settings** > **Environment Variables** di project Vercel, lalu tambahkan:
+
+| Variable | Keterangan |
+|---|---|
+| `STORE_NAME` | Nama toko kamu |
+| `ADMIN_USERNAME` | Username Telegram admin tanpa `@` |
+| `BOT_TOKEN` | Token bot dari `@BotFather` |
+| `ADMIN_TELEGRAM_ID` | ID Telegram admin |
+| `PAKASIR_API_KEY` | API Key dari Pakasir |
+| `PAKASIR_SLUG` | Slug project Pakasir |
+| `ADMIN_SECRET_KEY` | Password rahasia (bebas diisi string acak) |
+| `STORAGE_CHANNEL_ID` | ID Channel Telegram Private (contoh: `-100xxxxxxxxx`) |
+| `FIREBASE_SERVICE_ACCOUNT` | **Seluruh isi file JSON** dari Service Account Key Firebase (copy-paste mentah-mentah) |
+| `BASE_URL` | URL Vercel kamu (contoh: `https://namaproject.vercel.app`) |
+
+> **Cara mengisi `FIREBASE_SERVICE_ACCOUNT`:**
+> 1. Buka file `serviceAccountKey.json` yang didownload dari Firebase Console.
+> 2. Copy **seluruh isi** file tersebut (termasuk tanda `{` dan `}`).
+> 3. Paste ke kolom **Value** environment variable di Vercel.
+
+### 5. Re-deploy
+Setelah semua variable terisi, klik **Deployments** > klik tombol **⋮** di deployment terbaru > **Redeploy**.
+
+Bot Telegram kamu sekarang sudah berjalan di Vercel! 🚀
+
+---
+
 ## 📁 Struktur Folder
 
 ```
@@ -234,6 +301,24 @@ Ada dua cara upload stok akun di Panel Admin:
 - Cek apakah `BOT_TOKEN` di `.env` sudah benar.
 - Pastikan tidak ada bot lain yang sedang jalan dengan token yang sama (konflik polling).
 - Cek log: `pm2 logs panzzstore` atau log container Railway.
+- **Jika deploy di Vercel:** Pastikan `BASE_URL` sudah diisi dengan URL Vercel kamu agar webhook Telegram terdaftar otomatis.
+
+</details>
+
+<details>
+<summary><b>❌ PERMISSION_DENIED: Cloud Firestore API has not been used in project</b></summary>
+
+Error ini muncul karena **Firestore API belum diaktifkan** di Google Cloud Console. Cara mengatasinya:
+
+1. Buka link berikut (ganti `PROJECT_ID` dengan ID project Firebase kamu):
+   ```
+   https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID
+   ```
+2. Klik tombol **Enable**.
+3. Tunggu 1-2 menit agar perubahan terpropagasi.
+4. **Re-deploy** ulang di Vercel / Railway / restart server.
+
+Pastikan juga kamu sudah membuat **Firestore Database** di [Firebase Console](https://console.firebase.google.com) → **Build** > **Firestore Database** > **Create Database**.
 
 </details>
 
