@@ -39,16 +39,15 @@ function serveHtmlWithStoreName(filePath, extraReplace = null) {
 
 app.use('/dashboard', express.static(path.join(__dirname, '../dashboard'), { index: false }));
 
-// Expose public static downloads folder with auto-cleanup task
+// Expose public static downloads folder with auto-cleanup task (hanya dijalankan jika bukan di Vercel)
 const fs = require('fs');
-const downloadsDir = path.join(__dirname, '../storage/downloads');
-if (!fs.existsSync(downloadsDir)) {
-  fs.mkdirSync(downloadsDir, { recursive: true });
-}
-app.use('/downloads', express.static(downloadsDir));
-
-// Auto-cleanup files older than 24 hours in downloads folder (hanya dijalankan jika bukan di Vercel)
 if (process.env.VERCEL !== '1') {
+  const downloadsDir = path.join(__dirname, '../storage/downloads');
+  if (!fs.existsSync(downloadsDir)) {
+    fs.mkdirSync(downloadsDir, { recursive: true });
+  }
+  app.use('/downloads', express.static(downloadsDir));
+
   setInterval(() => {
     try {
       const files = fs.readdirSync(downloadsDir);
