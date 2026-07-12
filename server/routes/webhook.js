@@ -47,25 +47,25 @@ router.post('/pakasir', async (req, res) => {
 
 // POST /webhook/telegram - Mendengarkan update dari Telegram (Webhook mode)
 router.post('/telegram', async (req, res) => {
-  // Kirim 200 ke Telegram segera agar tidak retry
-  res.sendStatus(200);
-
   try {
     if (botInstance) {
       botInstance.processUpdate(req.body);
 
       // PENTING untuk Vercel Serverless:
       // processUpdate() memicu handler async (misalnya sendMessage ke Telegram API).
-      // Jika function langsung freeze setelah res.send(), handler belum selesai
-      // dan bot tidak akan membalas chat user.
-      // Kita tahan function tetap hidup selama 7 detik agar proses async selesai.
+      // Jika kita langsung mengirimkan respon, Vercel akan langsung membekukan (freeze)
+      // container node sebelum bot sempat menyelesaikan pengiriman pesan.
+      // Kita tahan proses ini selama 3.5 detik sebelum mengirim respon 200 ke Telegram.
       if (process.env.VERCEL === '1') {
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await new Promise(resolve => setTimeout(resolve, 3500));
       }
     }
   } catch (err) {
     console.error('Telegram Webhook Route Error:', err.message);
   }
+
+  // Kirim status 200 di paling akhir agar Vercel tidak melakukan freeze prematur
+  res.sendStatus(200);
 });
 
 module.exports = { router, setBotInstance };
