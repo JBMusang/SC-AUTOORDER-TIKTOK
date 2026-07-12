@@ -176,24 +176,29 @@ Bot ini sudah mendukung deployment di **Vercel Serverless**. Saat dideploy di Ve
 - Push seluruh kode project ke repositori tersebut.
 - File `.env` dan `serviceAccountKey.json` otomatis diabaikan oleh `.gitignore`.
 
-### 2. Setup Firebase (WAJIB)
+### 2. Setup Firebase (WAJIB & KRUSIAL)
 
-Sebelum deploy, pastikan kamu sudah melakukan **3 hal** ini di Firebase Console:
+Sebelum di-deploy ke Vercel, pastikan kamu sudah menyelesaikan **3 langkah penting** di bawah ini agar bot tidak mengalami error database:
 
-1. **Aktifkan Firestore Database**
-   - Buka [Firebase Console](https://console.firebase.google.com) → pilih project → **Build** > **Firestore Database** → **Create Database**.
+> [!IMPORTANT]
+> **Langkah A: Aktifkan Firestore Database**
+> 1. Buka [Firebase Console](https://console.firebase.google.com) dan pilih project kamu.
+> 2. Klik menu **Build** > **Firestore Database** di sidebar kiri.
+> 3. Klik tombol **Create Database** (Buat Database).
+> 4. Pilih lokasi terdekat (misal: `asia-southeast2` untuk Indonesia/Singapura) lalu pilih **Start in production mode**.
 
-2. **Aktifkan Firebase Storage**
-   - Buka **Build** > **Storage** → klik **Get Started**.
+> [!IMPORTANT]
+> **Langkah B: Aktifkan Firebase Storage (Tempat Download File Akun)**
+> 1. Klik menu **Build** > **Storage** di sidebar kiri.
+> 2. Klik tombol **Get Started** dan ikuti proses inisialisasinya sampai selesai dengan opsi default.
 
-3. **Aktifkan Firestore API di Google Cloud Console** ⚠️
-   - Buka link berikut (ganti `PROJECT_ID` dengan ID project Firebase kamu):
-     ```
-     https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID
-     ```
-   - Klik tombol **Enable**.
-   - Tunggu 1-2 menit sampai API terpropagasi.
-   - **Jika langkah ini dilewatkan**, bot akan error `PERMISSION_DENIED: Cloud Firestore API has not been used in project...`
+> [!WARNING]
+> **Langkah C: Aktifkan Firestore API di Google Cloud (Paling Sering Terlewat!)**
+> 1. Buka link ini di browser kamu (ganti `PROJECT_ID` pada link dengan ID project Firebase kamu):
+>    `https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID`
+> 2. Klik tombol **Enable** (Aktifkan).
+> 3. Tunggu 1 - 2 menit agar proses aktivasi terpropagasi oleh sistem Google.
+> *Jika langkah C dilewatkan, bot akan mengalami error `PERMISSION_DENIED: Cloud Firestore API has not been used...` saat dijalankan di Vercel.*
 
 ### 3. Hubungkan ke Vercel
 1. Login ke [Vercel](https://vercel.com) menggunakan akun GitHub.
