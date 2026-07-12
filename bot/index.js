@@ -16,7 +16,15 @@ const { handleBantuan } = require('./handlers/bantuan');
 const { getSession }    = require('./sessions');
 
 const isVercel = process.env.VERCEL === '1';
-const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: !isVercel });
+const bot = new TelegramBot(process.env.BOT_TOKEN, {
+  polling: !isVercel,
+  request: {
+    agentOptions: {
+      keepAlive: true,
+      family: 4
+    }
+  }
+});
 
 console.log('🤖 PanzzStore Bot is running...');
 

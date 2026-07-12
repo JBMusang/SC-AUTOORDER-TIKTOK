@@ -7,7 +7,14 @@ const TelegramBot = require('node-telegram-bot-api');
 let _storageBot = null;
 function getStorageBot() {
   if (!_storageBot) {
-    _storageBot = new TelegramBot(process.env.BOT_TOKEN);
+    _storageBot = new TelegramBot(process.env.BOT_TOKEN, {
+      request: {
+        agentOptions: {
+          keepAlive: true,
+          family: 4
+        }
+      }
+    });
   }
   return _storageBot;
 }
