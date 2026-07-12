@@ -363,78 +363,54 @@ async function deliverOrder(bot, orderId) {
     const fs = require('fs');
     const path = require('path');
     
-    // Buat ZIP tunggal berisi seluruh akun
-    const tempZipPath = await createZipFromAccounts(accounts, orderId);
-    
     const categoryName = order.type || 'akun';
     const garansiStatus = order.garansi ? 'garansi' : 'nogaransi';
     const qtyCount = `${order.qty}x`;
     const finalZipName = `${categoryName}_${garansiStatus}_${qtyCount}_${orderId}.zip`;
     
-    let downloadUrl;
+    let downloadUrl = null;
     const isVercel = process.env.VERCEL === '1';
 
-    if (isVercel) {
-      // Pada Vercel, kita hindari penggunaan Firebase Storage berbayar (Blaze plan).
-      // Kirim pesan konfirmasi dulu, kemudian kirim dokumen ZIP langsung ke chat Telegram user.
-      const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
-      const deliveryText = `✅ <b>Order Berhasil!</b>
-      
-<blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
-🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
-
-File akun Anda dikirimkan di bawah ini secara langsung... 👇`;
-
-      const inlineKeyboard = {
-        inline_keyboard: [
-          [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
-        ]
-      };
-
-      await bot.sendMessage(chatId, deliveryText, {
-        parse_mode: 'HTML',
-        reply_markup: inlineKeyboard
-      });
-
-      console.log('📤 Mengirim dokumen zip secara langsung ke chat Telegram...');
-      await bot.sendDocument(chatId, fs.createReadStream(tempZipPath), {
-        caption: `📦 <b>File Akun Anda (${qtyCount})</b>\n🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code>\n\n<i>Terima kasih sudah belanja di ${storeName}! 🙏</i>`,
-        parse_mode: 'HTML',
-      }, {
-        filename: finalZipName,
-        contentType: 'application/zip'
-      });
-
-      cleanupZip(tempZipPath);
-    } else {
-      if (process.env.USE_FIREBASE_STORAGE === 'true') {
-        console.log('☁️ Mengunggah file ZIP ke Firebase Storage...');
+    // Coba upload ke Firebase Storage jika bukan Vercel dan Firebase Storage diaktifkan
+    if (!isVercel && process.env.USE_FIREBASE_STORAGE === 'true') {
+      try {
+        console.log('☁️ Mencoba mengunggah file ZIP ke Firebase Storage...');
+        const tempZipPath = await createZipFromAccounts(accounts, orderId);
         const { uploadFileToStorage } = require('../../server/firebase');
         downloadUrl = await uploadFileToStorage(tempZipPath, `downloads/${finalZipName}`);
         cleanupZip(tempZipPath);
-        console.log('☁️ Upload berhasil. URL:', downloadUrl);
-      } else {
-        // Tentukan path folder downloads publik (Lokal VPS)
+        console.log('☁️ Upload Firebase sukses. URL:', downloadUrl);
+      } catch (err) {
+        console.error('⚠️ Gagal upload ke Firebase Storage, beralih ke pengiriman Telegram langsung:', err.message);
+        downloadUrl = null;
+      }
+    } else if (!isVercel) {
+      // Tentukan path folder downloads publik (Lokal VPS)
+      try {
+        const tempZipPath = await createZipFromAccounts(accounts, orderId);
         const destDir = path.join(__dirname, '../../storage/downloads/');
         if (!fs.existsSync(destDir)) {
           fs.mkdirSync(destDir, { recursive: true });
         }
         const finalZipPath = path.join(destDir, finalZipName);
-        
-        // Pindahkan file zip ke folder publik
         fs.copyFileSync(tempZipPath, finalZipPath);
         cleanupZip(tempZipPath);
         
-        // Buat link download
         let baseUrl = process.env.BASE_URL || '';
         if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
           baseUrl = `https://${baseUrl}`;
         }
         downloadUrl = `${baseUrl}/downloads/${finalZipName}`;
+      } catch (err) {
+        console.error('⚠️ Gagal copy ke folder lokal, beralih ke pengiriman Telegram langsung:', err.message);
+        downloadUrl = null;
       }
+    }
 
-      const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
-      
+    const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
+
+    // Jika downloadUrl berhasil dibuat (hanya untuk Lokal VPS non-Vercel)
+    if (downloadUrl) {
       const deliveryText = `✅ <b>Order Berhasil!</b>
       
 <blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
@@ -456,6 +432,50 @@ Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsun
         parse_mode: 'HTML',
         reply_markup: inlineKeyboard
       });
+    } else {
+      // Jika di Vercel (atau VPS tanpa storage setup), kirim otomatis dengan metode batching/parts langsung ke Telegram (100% Gratis & Bebas Limit!)
+      const ACCOUNTS_PER_PART = 30; // Maksimal 30 akun per part agar ukuran file tetap aman di bawah 50MB
+      const totalParts = Math.ceil(accounts.length / ACCOUNTS_PER_PART);
+
+      const deliveryText = `✅ <b>Order Berhasil!</b>
+      
+<blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
+🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
+
+File akun Anda dikirimkan di bawah ini secara langsung dalam <b>${totalParts} bagian (parts)</b>... 👇`;
+
+      const inlineKeyboard = {
+        inline_keyboard: [
+          [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
+        ]
+      };
+
+      await bot.sendMessage(chatId, deliveryText, {
+        parse_mode: 'HTML',
+        reply_markup: inlineKeyboard
+      });
+
+      // Kirim setiap part secara berurutan
+      for (let partIdx = 0; partIdx < totalParts; partIdx++) {
+        const start = partIdx * ACCOUNTS_PER_PART;
+        const end = start + ACCOUNTS_PER_PART;
+        const partAccounts = accounts.slice(start, end);
+        const partZipName = `${categoryName}_${garansiStatus}_part${partIdx + 1}_of_${totalParts}_${orderId}.zip`;
+
+        console.log(`📦 Merakit ZIP untuk Part ${partIdx + 1} (${partAccounts.length} akun)...`);
+        const tempZipPath = await createZipFromAccounts(partAccounts, `${orderId}_part${partIdx + 1}`);
+
+        console.log(`📤 Mengirim Part ${partIdx + 1}/${totalParts} ke chat Telegram...`);
+        await bot.sendDocument(chatId, fs.createReadStream(tempZipPath), {
+          caption: `📦 <b>Bagian ${partIdx + 1}/${totalParts} (${partAccounts.length} akun)</b>\n🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code>`,
+          parse_mode: 'HTML',
+        }, {
+          filename: partZipName,
+          contentType: 'application/zip'
+        });
+
+        cleanupZip(tempZipPath);
+      }
     }
 
     bot.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
