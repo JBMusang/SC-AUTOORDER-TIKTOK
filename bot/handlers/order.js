@@ -106,6 +106,11 @@ Stok tersedia: <b>${stockNG} akun</b>
 // ─── STEP 3: Pilih jumlah ─────────────────────────────────────────────────────
 async function handleSelectGaransi(bot, chatId, messageId, garansi) {
   const session = getSession(chatId);
+  if (!session.type) {
+    // Jika sesi terhapus akibat Vercel cold-start recycle, redirect kembali ke menu pembelian
+    await handleBeli(bot, chatId, messageId);
+    return;
+  }
   session.garansi = garansi;
 
   const prices = await getPrices();
@@ -131,6 +136,11 @@ Pilih atau ketik jumlah akun:`;
 // ─── STEP 4: Konfirmasi order ─────────────────────────────────────────────────
 async function handleQtySelected(bot, chatId, messageId, qty) {
   const session = getSession(chatId);
+  if (!session.type || session.garansi === undefined) {
+    // Sesi terhapus akibat Vercel recycle, redirect kembali ke menu pembelian
+    await handleBeli(bot, chatId, messageId);
+    return;
+  }
   session.qty           = qty;
   session.waitingForQty = false;
 
@@ -183,9 +193,8 @@ async function handleConfirmOrder(bot, chatId, messageId, from) {
   const session = getSession(chatId);
   const { type, garansi, qty, totalPrice } = session;
 
-  if (!type || !qty || !totalPrice) {
-    await editMain(bot, chatId,
-      '❌ Sesi order habis. Silakan mulai ulang.', {}, messageId);
+  if (!type || garansi === undefined || !qty || !totalPrice) {
+    await handleBeli(bot, chatId, messageId);
     return;
   }
 
@@ -493,9 +502,8 @@ async function handlePayWithSaldo(bot, chatId, messageId, from) {
   const session = getSession(chatId);
   const { type, garansi, qty, totalPrice } = session;
 
-  if (!type || !qty || !totalPrice) {
-    await editMain(bot, chatId,
-      '❌ Sesi order habis. Silakan mulai ulang.', {}, messageId);
+  if (!type || garansi === undefined || !qty || !totalPrice) {
+    await handleBeli(bot, chatId, messageId);
     return;
   }
 
