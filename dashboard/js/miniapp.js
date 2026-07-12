@@ -628,59 +628,78 @@ async function doUpload() {
     0
   );
 
-  try {
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      const progressPercent = Math.round((i / selectedFiles.length) * 100);
-      setOverlay(
-        'Mengupload Akun', 
-        `Mengupload ${file.name} (${i + 1}/${selectedFiles.length})...<br><small style="color:#ffcc00;margin-top:0.5rem;display:block;">⚠️ Jangan tutup Mini App selama proses berlangsung!</small>`, 
-        progressPercent
-      );
+  const CONCURRENCY_LIMIT = 5;
+  const queue = [...selectedFiles];
+  let activeUploads = 0;
+  let finishedCount = 0;
 
-      const formData = new FormData();
-      formData.append('type', selectedType);
-      formData.append('garansi', selectedGaransi);
-      formData.append('files', file);
+  return new Promise((resolve) => {
+    async function next() {
+      if (queue.length === 0 && activeUploads === 0) {
+        setOverlay('Selesai!', 'Menyimpan konfigurasi...', 100);
+        setTimeout(() => {
+          hideOverlay();
+          if (successCount > 0) {
+            showToast(`✅ ${successCount} file berhasil diupload!`);
+          }
+          if (failCount > 0) {
+            showToast(`❌ ${failCount} file gagal diupload: ${errors.join(', ')}`);
+          }
+          document.getElementById('uploadBtn').disabled = false;
+          clearFiles();
+          checkUploadStatus(); // Check sync status immediately after upload
+          resolve();
+        }, 700);
+        return;
+      }
 
-      const res = await fetch('/api/admin/stock/upload', {
-        method: 'POST',
-        headers: {
-          'x-admin-token': window._adminToken || '',
-          'x-tg-init-data': initData || '',
-        },
-        body: formData,
-      });
+      while (queue.length > 0 && activeUploads < CONCURRENCY_LIMIT) {
+        const file = queue.shift();
+        activeUploads++;
 
-      const data = await res.json();
-      if (data.success) {
-        successCount += data.uploaded || 1;
-      } else {
-        failCount++;
-        errors.push(`${file.name}: ${data.error || 'gagal'}`);
+        (async () => {
+          try {
+            const formData = new FormData();
+            formData.append('type', selectedType);
+            formData.append('garansi', selectedGaransi);
+            formData.append('files', file);
+
+            const res = await fetch('/api/admin/stock/upload', {
+              method: 'POST',
+              headers: {
+                'x-admin-token': window._adminToken || '',
+                'x-tg-init-data': initData || '',
+              },
+              body: formData,
+            });
+
+            const data = await res.json();
+            if (data.success) {
+              successCount += data.uploaded || 1;
+            } else {
+              failCount++;
+              errors.push(`${file.name}: ${data.error || 'gagal'}`);
+            }
+          } catch (err) {
+            failCount++;
+            errors.push(`${file.name}: ${err.message}`);
+          } finally {
+            activeUploads--;
+            finishedCount++;
+            const progressPercent = Math.round((finishedCount / selectedFiles.length) * 100);
+            setOverlay(
+              'Mengupload Akun', 
+              `Mengupload (${finishedCount}/${selectedFiles.length})...<br><small style="color:#ffcc00;margin-top:0.5rem;display:block;">⚠️ Jangan tutup Mini App selama proses berlangsung!</small>`, 
+              progressPercent
+            );
+            next();
+          }
+        })();
       }
     }
 
-    setOverlay('Selesai!', 'Menyimpan konfigurasi...', 100);
-
-    setTimeout(() => {
-      hideOverlay();
-      if (successCount > 0) {
-        showToast(`✅ ${successCount} file berhasil diupload!`);
-      }
-      if (failCount > 0) {
-        showToast(`❌ ${failCount} file gagal diupload: ${errors.join(', ')}`);
-      }
-      document.getElementById('uploadBtn').disabled = false;
-      clearFiles();
-      checkUploadStatus(); // Check sync status immediately after upload
-    }, 700);
-
-  } catch (err) {
-    hideOverlay();
-    showToast('❌ Terjadi kesalahan saat upload: ' + err.message);
-    document.getElementById('uploadBtn').disabled = false;
-  }
+    next();
+  });
 }
 
 // ─── PRICES ───────────────────────────────────────────────────────────────────
