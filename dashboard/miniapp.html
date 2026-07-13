@@ -134,26 +134,26 @@
           </div>
 
           <!-- Tombol Aksi Kustom -->
-          <div style="display: flex; gap: 0.5rem; width: 100%;">
-            <div class="form-group" style="margin: 0; flex: 1; display: flex; flex-direction: column; gap: 0.5rem;">
-              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Teks Tombol (Opsional)</label>
-              <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
-                <input type="text" id="broadcastBtnText" placeholder="Hubungi Admin / Beli" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
-              </div>
+          <div class="form-group" style="margin: 0; display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Teks Tombol (Opsional)</label>
+            <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
+              <input type="text" id="broadcastBtnText" placeholder="Hubungi Admin / Beli" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
             </div>
-            <div class="form-group" style="margin: 0; flex: 1.5; display: flex; flex-direction: column; gap: 0.5rem;">
-              <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Link URL Tombol (Opsional)</label>
-              <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
-                <input type="text" id="broadcastBtnUrl" placeholder="https://t.me/username" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
-              </div>
+          </div>
+          <div class="form-group" style="margin: 0; display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-main);">Link URL Tombol (Opsional)</label>
+            <div style="display:flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:0 0.75rem;">
+              <input type="text" id="broadcastBtnUrl" placeholder="https://t.me/username" style="background:none; border:none; color:#fff; padding:0.75rem 0.25rem; font-size:0.9rem; outline:none; flex:1;" />
             </div>
           </div>
 
           <!-- Buttons Group -->
-          <div style="display: flex; gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
-            <button class="btn-secondary" onclick="resetBroadcastForm()" style="margin: 0; background: rgba(255,82,82,0.12); color: #ff5252; border: 1px solid rgba(255,82,82,0.25); padding: 0.75rem 1rem; border-radius: 12px; font-weight: 600; outline: none; cursor: pointer; transition: all 0.25s;" onmouseover="this.style.background='rgba(255,82,82,0.22)'" onmouseout="this.style.background='rgba(255,82,82,0.12)'">✕ Batal</button>
-            <button class="btn-secondary" onclick="previewBroadcast()" id="btnPreviewBroadcast" style="margin: 0; flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border);">👁️ Preview</button>
-            <button class="btn-primary" onclick="sendBroadcast()" id="btnSendBroadcast" style="margin: 0; flex: 2;">🚀 Kirim Broadcast</button>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
+            <button class="btn-primary" onclick="sendBroadcast()" id="btnSendBroadcast" style="margin: 0; width: 100%;">🚀 Kirim Broadcast</button>
+            <div style="display: flex; gap: 0.5rem; width: 100%;">
+              <button class="btn-secondary" onclick="previewBroadcast()" id="btnPreviewBroadcast" style="margin: 0; flex: 1; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); height: 2.75rem; border-radius: 12px; font-weight: 600; cursor: pointer;">👁️ Preview</button>
+              <button class="btn-secondary" onclick="resetBroadcastForm()" style="margin: 0; flex: 1; background: rgba(255,82,82,0.12); color: #ff5252; border: 1px solid rgba(255,82,82,0.25); height: 2.75rem; border-radius: 12px; font-weight: 600; outline: none; cursor: pointer; transition: all 0.25s;" onmouseover="this.style.background='rgba(255,82,82,0.22)'" onmouseout="this.style.background='rgba(255,82,82,0.12)'">✕ Batal</button>
+            </div>
           </div>
         </div>
       </div>
