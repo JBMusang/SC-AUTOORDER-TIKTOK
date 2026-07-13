@@ -502,7 +502,7 @@ function setOverlay(title, desc, percent) {
   if (ov) {
     ov.style.display = 'flex';
     document.getElementById('loadingTitle').textContent = title;
-    document.getElementById('loadingDesc').innerHTML = desc;
+    document.getElementById('loadingDesc').textContent = desc;
     document.getElementById('loadingProgBar').style.width = percent + '%';
   }
 }
@@ -616,90 +616,52 @@ function clearFiles() {
 async function doUpload() {
   if (!selectedFiles.length) return;
 
+  const formData = new FormData();
+  formData.append('type', selectedType);
+  formData.append('garansi', selectedGaransi);
+  selectedFiles.forEach(f => formData.append('files', f));
+
   document.getElementById('uploadBtn').disabled = true;
-  
-  let successCount = 0;
-  let failCount = 0;
-  const errors = [];
+  setOverlay('Mengupload ke Server', 'Sedang mengirim data, mohon tunggu...', 0);
 
-  setOverlay(
-    'Mengupload Akun', 
-    `Mempersiapkan upload (0/${selectedFiles.length})...<br><small style="color:#ffcc00;margin-top:0.5rem;display:block;">⚠️ Jangan tutup Mini App selama proses berlangsung!</small>`, 
-    0
-  );
+  let prog = 0;
+  const interval = setInterval(() => {
+    prog = Math.min(prog + 5, 90);
+    setOverlay('Mengupload ke Server', 'Proses upload sedang berjalan...', prog);
+  }, 200);
 
-  const CONCURRENCY_LIMIT = 5;
-  const queue = [...selectedFiles];
-  let activeUploads = 0;
-  let finishedCount = 0;
+  try {
+    const res = await fetch('/api/admin/stock/upload', {
+      method: 'POST',
+      headers: {
+        'x-admin-token': window._adminToken || '',
+        'x-tg-init-data': initData || '',
+      },
+      body: formData,
+    });
+    const data = await res.json();
+    clearInterval(interval);
+    setOverlay('Selesai!', 'Menyimpan konfigurasi...', 100);
 
-  return new Promise((resolve) => {
-    async function next() {
-      if (queue.length === 0 && activeUploads === 0) {
-        setOverlay('Selesai!', 'Menyimpan konfigurasi...', 100);
-        setTimeout(() => {
-          hideOverlay();
-          if (successCount > 0) {
-            showToast(`✅ ${successCount} file berhasil diupload!`);
-          }
-          if (failCount > 0) {
-            showToast(`❌ ${failCount} file gagal diupload: ${errors.join(', ')}`);
-          }
-          document.getElementById('uploadBtn').disabled = false;
-          clearFiles();
-          checkUploadStatus(); // Check sync status immediately after upload
-          resolve();
-        }, 700);
-        return;
-      }
-
-      while (queue.length > 0 && activeUploads < CONCURRENCY_LIMIT) {
-        const file = queue.shift();
-        activeUploads++;
-
-        (async () => {
-          try {
-            const formData = new FormData();
-            formData.append('type', selectedType);
-            formData.append('garansi', selectedGaransi);
-            formData.append('files', file);
-
-            const res = await fetch('/api/admin/stock/upload', {
-              method: 'POST',
-              headers: {
-                'x-admin-token': window._adminToken || '',
-                'x-tg-init-data': initData || '',
-              },
-              body: formData,
-            });
-
-            const data = await res.json();
-            if (data.success) {
-              successCount += data.uploaded || 1;
-            } else {
-              failCount++;
-              errors.push(`${file.name}: ${data.error || 'gagal'}`);
-            }
-          } catch (err) {
-            failCount++;
-            errors.push(`${file.name}: ${err.message}`);
-          } finally {
-            activeUploads--;
-            finishedCount++;
-            const progressPercent = Math.round((finishedCount / selectedFiles.length) * 100);
-            setOverlay(
-              'Mengupload Akun', 
-              `Mengupload (${finishedCount}/${selectedFiles.length})...<br><small style="color:#ffcc00;margin-top:0.5rem;display:block;">⚠️ Jangan tutup Mini App selama proses berlangsung!</small>`, 
-              progressPercent
-            );
-            next();
-          }
-        })();
-      }
+    if (data.success) {
+      setTimeout(() => {
+        hideOverlay();
+        showToast(`✅ ${data.uploaded} file berhasil diupload!`);
+        document.getElementById('uploadBtn').disabled = false;
+        clearFiles();
+        checkUploadStatus(); // Check sync status immediately after upload
+      }, 700);
+    } else {
+      hideOverlay();
+      showToast('❌ Upload gagal: ' + (data.error || ''));
+      document.getElementById('uploadBtn').disabled = false;
     }
-
-    next();
-  });
+  } catch {
+    clearInterval(interval);
+    hideOverlay();
+    showToast('❌ Terjadi kesalahan saat upload.');
+    document.getElementById('uploadBtn').disabled = false;
+  }
 }
 
 // ─── PRICES ───────────────────────────────────────────────────────────────────

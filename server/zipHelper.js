@@ -36,18 +36,7 @@ async function createZipFromAccounts(accounts, orderId) {
     const destPath = path.join(accountDir, fileName);
 
     try {
-      if (acc.fileContentBase64) {
-        // ─── BARU: Tulis langsung dari Base64 di Firestore (100% Gratis & Bebas Firebase Storage) ────
-        console.log(`📝 Firestore Base64 write: ${fileName}`);
-        const fileBuffer = Buffer.from(acc.fileContentBase64, 'base64');
-        fs.writeFileSync(destPath, fileBuffer);
-      } else if (acc.storagePath && (process.env.VERCEL === '1' || acc.storagePath.startsWith('accounts/'))) {
-        // ─── BARU: Download dari Firebase Storage (Super Cepat & Tanpa Limit) ────
-        console.log(`📥 Firebase Storage download: ${fileName} (Path: ${acc.storagePath})`);
-        const { getFirebaseBucket } = require('./firebase');
-        const bucket = getFirebaseBucket();
-        await bucket.file(acc.storagePath).download({ destination: destPath });
-      } else if (acc.telegramFileId && downloadFileFromTelegram) {
+      if (acc.telegramFileId && downloadFileFromTelegram) {
         // ─── BARU: Download dari Telegram Storage ────────────────────────────
         console.log(`📥 Telegram download: ${fileName} (ID: ${acc.telegramFileId})`);
         await downloadFileFromTelegram(acc.telegramFileId, destPath);

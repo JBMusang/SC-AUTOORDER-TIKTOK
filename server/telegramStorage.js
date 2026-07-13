@@ -1,17 +1,19 @@
 const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
-const https = require('https');
-const FormData = require('form-data');
+const TelegramBot = require('node-telegram-bot-api');
 
-// HTTPS Agent dipaksa menggunakan IPv4 (family: 4) dan Keep-Alive untuk performa super cepat & menghindari TLS disconnect
-const httpsAgent = new https.Agent({
-  keepAlive: true,
-  family: 4
-});
+// Instance bot khusus untuk storage (tanpa polling, agar tidak konflik dengan bot utama)
+let _storageBot = null;
+function getStorageBot() {
+  if (!_storageBot) {
+    _storageBot = new TelegramBot(process.env.BOT_TOKEN);
+  }
+  return _storageBot;
+}
 
 /**
- * Upload sebuah file dari lokal ke Telegram Private Channel menggunakan Axios.
+ * Upload sebuah file dari lokal ke Telegram Private Channel, lalu hapus file lokalnya.
  * @param {string} filePath - Path lokal file
  * @param {string} fileName - Nama file
  * @returns {Promise<string>} telegramFileId
@@ -24,49 +26,37 @@ async function uploadFileToTelegram(filePath, fileName, retries = 5) {
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      const form = new FormData();
-      form.append('chat_id', channelId);
-      form.append('document', fs.createReadStream(filePath), {
+      const msg = await getStorageBot().sendDocument(channelId, fs.createReadStream(filePath), {
+        caption: `📦 File Account: ${fileName}\n📅 Date: ${new Date().toISOString()}`
+      }, {
         filename: fileName,
         contentType: 'application/octet-stream'
       });
-      form.append('caption', `📦 File Account: ${fileName}\n📅 Date: ${new Date().toISOString()}`);
 
-      const res = await axios.post(
-        `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendDocument`,
-        form,
-        {
-          headers: form.getHeaders(),
-          httpsAgent,
-          maxContentLength: Infinity,
-          maxBodyLength: Infinity
-        }
-      );
-
-      if (!res.data || !res.data.ok) {
-        throw new Error('Gagal mengunggah file ke Telegram: ' + JSON.stringify(res.data));
+      if (!msg.document || !msg.document.file_id) {
+        throw new Error('Gagal mendapatkan file_id dari Telegram');
       }
 
-      const telegramFileId = res.data.result.document.file_id;
+      const telegramFileId = msg.document.file_id;
       console.log(`✅ Telegram Storage Upload: ${fileName} → File ID: ${telegramFileId}`);
       return telegramFileId;
     } catch (err) {
-      const errorMsg = err.response?.data?.description || err.message;
-      if (errorMsg.includes('429') || errorMsg.includes('too many requests')) {
-        const match = errorMsg.match(/retry after (\d+)/i);
+      if (err.message && err.message.includes('429')) {
+        const match = err.message.match(/retry after (\d+)/i);
         const waitSeconds = match ? parseInt(match[1]) : 10;
         console.log(`⏳ Limit Telegram (429) untuk ${fileName}. Menunggu ${waitSeconds} detik (Percobaan ${attempt}/${retries})...`);
+        // Tunggu sesuai instruksi Telegram + 1 detik buffer
         await new Promise(resolve => setTimeout(resolve, (waitSeconds + 1) * 1000));
       } else {
-        throw new Error(errorMsg);
+        throw err; // Jika bukan 429, langsung throw error
       }
     }
   }
-  throw new Error(`Gagal upload ${fileName} setelah ${retries} percobaan karena limit Telegram.`);
+  throw new Error(`Gagal upload ${fileName} setelah ${retries} percobaan karena kena limit Telegram terus.`);
 }
 
 /**
- * Mendownload file dari Telegram menggunakan Axios (dipaksa IPv4) berdasarkan file_id, simpan ke lokal.
+ * Mendownload file dari Telegram berdasarkan file_id, simpan ke lokal.
  * @param {string} fileId - Telegram file_id
  * @param {string} destPath - Path tujuan untuk menyimpan file lokal
  * @returns {Promise<void>}
@@ -80,27 +70,14 @@ async function downloadFileFromTelegram(fileId, destPath) {
     return;
   }
 
-  // Dapatkan URL file dari API Telegram menggunakan Axios (dipaksa IPv4 agar tidak hang)
-  const getFileRes = await axios({
-    method: 'GET',
-    url: `https://api.telegram.org/bot${process.env.BOT_TOKEN}/getFile`,
-    params: { file_id: fileId },
-    httpsAgent
-  });
-
-  if (!getFileRes.data || !getFileRes.data.ok) {
-    throw new Error('Gagal mendapatkan informasi file dari Telegram: ' + JSON.stringify(getFileRes.data));
-  }
-
-  const filePath = getFileRes.data.result.file_path;
-  const fileLink = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
+  // Dapatkan URL file dari API Telegram
+  const fileLink = await getStorageBot().getFileLink(fileId);
   
   // Download file menggunakan Axios
   const response = await axios({
     method: 'GET',
     url: fileLink,
     responseType: 'stream',
-    httpsAgent
   });
 
   return new Promise((resolve, reject) => {

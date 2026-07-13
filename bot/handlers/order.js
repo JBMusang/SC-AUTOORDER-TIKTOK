@@ -106,11 +106,6 @@ Stok tersedia: <b>${stockNG} akun</b>
 // ─── STEP 3: Pilih jumlah ─────────────────────────────────────────────────────
 async function handleSelectGaransi(bot, chatId, messageId, garansi) {
   const session = getSession(chatId);
-  if (!session.type) {
-    // Jika sesi terhapus akibat Vercel cold-start recycle, redirect kembali ke menu pembelian
-    await handleBeli(bot, chatId, messageId);
-    return;
-  }
   session.garansi = garansi;
 
   const prices = await getPrices();
@@ -136,11 +131,6 @@ Pilih atau ketik jumlah akun:`;
 // ─── STEP 4: Konfirmasi order ─────────────────────────────────────────────────
 async function handleQtySelected(bot, chatId, messageId, qty) {
   const session = getSession(chatId);
-  if (!session.type || session.garansi === undefined) {
-    // Sesi terhapus akibat Vercel recycle, redirect kembali ke menu pembelian
-    await handleBeli(bot, chatId, messageId);
-    return;
-  }
   session.qty           = qty;
   session.waitingForQty = false;
 
@@ -193,8 +183,9 @@ async function handleConfirmOrder(bot, chatId, messageId, from) {
   const session = getSession(chatId);
   const { type, garansi, qty, totalPrice } = session;
 
-  if (!type || garansi === undefined || !qty || !totalPrice) {
-    await handleBeli(bot, chatId, messageId);
+  if (!type || !qty || !totalPrice) {
+    await editMain(bot, chatId,
+      '❌ Sesi order habis. Silakan mulai ulang.', {}, messageId);
     return;
   }
 
@@ -363,56 +354,35 @@ async function deliverOrder(bot, orderId) {
     const fs = require('fs');
     const path = require('path');
     
+    // Buat ZIP tunggal berisi seluruh akun
+    const tempZipPath = await createZipFromAccounts(accounts, orderId);
+    
+    // Tentukan path folder downloads publik
+    const destDir = path.join(__dirname, '../../storage/downloads/');
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    
     const categoryName = order.type || 'akun';
     const garansiStatus = order.garansi ? 'garansi' : 'nogaransi';
     const qtyCount = `${order.qty}x`;
     const finalZipName = `${categoryName}_${garansiStatus}_${qtyCount}_${orderId}.zip`;
+    const finalZipPath = path.join(destDir, finalZipName);
     
-    let downloadUrl = null;
-    const isVercel = process.env.VERCEL === '1';
-
-    // Coba upload ke Firebase Storage jika bukan Vercel dan Firebase Storage diaktifkan
-    if (!isVercel && process.env.USE_FIREBASE_STORAGE === 'true') {
-      try {
-        console.log('☁️ Mencoba mengunggah file ZIP ke Firebase Storage...');
-        const tempZipPath = await createZipFromAccounts(accounts, orderId);
-        const { uploadFileToStorage } = require('../../server/firebase');
-        downloadUrl = await uploadFileToStorage(tempZipPath, `downloads/${finalZipName}`);
-        cleanupZip(tempZipPath);
-        console.log('☁️ Upload Firebase sukses. URL:', downloadUrl);
-      } catch (err) {
-        console.error('⚠️ Gagal upload ke Firebase Storage, beralih ke pengiriman Telegram langsung:', err.message);
-        downloadUrl = null;
-      }
-    } else if (!isVercel) {
-      // Tentukan path folder downloads publik (Lokal VPS)
-      try {
-        const tempZipPath = await createZipFromAccounts(accounts, orderId);
-        const destDir = path.join(__dirname, '../../storage/downloads/');
-        if (!fs.existsSync(destDir)) {
-          fs.mkdirSync(destDir, { recursive: true });
-        }
-        const finalZipPath = path.join(destDir, finalZipName);
-        fs.copyFileSync(tempZipPath, finalZipPath);
-        cleanupZip(tempZipPath);
-        
-        let baseUrl = process.env.BASE_URL || '';
-        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-          baseUrl = `https://${baseUrl}`;
-        }
-        downloadUrl = `${baseUrl}/downloads/${finalZipName}`;
-      } catch (err) {
-        console.error('⚠️ Gagal copy ke folder lokal, beralih ke pengiriman Telegram langsung:', err.message);
-        downloadUrl = null;
-      }
+    // Pindahkan file zip ke folder publik
+    fs.copyFileSync(tempZipPath, finalZipPath);
+    cleanupZip(tempZipPath);
+    
+    // Buat link download
+    let baseUrl = process.env.BASE_URL || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = `https://${baseUrl}`;
     }
-
+    const downloadUrl = `${baseUrl}/downloads/${finalZipName}`;
     const adminUsername = process.env.ADMIN_USERNAME || 'panzzstore_admin';
-
-    // Jika downloadUrl berhasil dibuat (hanya untuk Lokal VPS non-Vercel)
-    if (downloadUrl) {
-      const deliveryText = `✅ <b>Order Berhasil!</b>
-      
+    
+    const deliveryText = `✅ <b>Order Berhasil!</b>
+    
 <blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
 🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
 
@@ -421,84 +391,17 @@ Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsun
 
 <i>Terima kasih sudah belanja di ${storeName}! 🙏</i>`;
 
-      const inlineKeyboard = {
-        inline_keyboard: [
-          [{ text: '📥 Download File Akun (.zip)', url: downloadUrl }],
-          [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
-        ]
-      };
+    const inlineKeyboard = {
+      inline_keyboard: [
+        [{ text: '📥 Download File Akun (.zip)', url: downloadUrl }],
+        [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
+      ]
+    };
 
-      await bot.sendMessage(chatId, deliveryText, {
-        parse_mode: 'HTML',
-        reply_markup: inlineKeyboard
-      });
-    } else {
-      // Jika di Vercel (atau VPS tanpa storage setup), kirim otomatis dengan metode batching/parts langsung ke Telegram (100% Gratis & Bebas Limit!)
-      const ACCOUNTS_PER_PART = 30; // Maksimal 30 akun per part agar ukuran file tetap aman di bawah 50MB
-      const totalParts = Math.ceil(accounts.length / ACCOUNTS_PER_PART);
-
-      const deliveryText = `✅ <b>Order Berhasil!</b>
-      
-<blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
-🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
-
-File akun Anda dikirimkan di bawah ini secara langsung dalam <b>${totalParts} bagian (parts)</b>... 👇`;
-
-      const inlineKeyboard = {
-        inline_keyboard: [
-          [{ text: '📞 Hubungi Admin', url: `https://t.me/${adminUsername}` }],
-        ]
-      };
-
-      await bot.sendMessage(chatId, deliveryText, {
-        parse_mode: 'HTML',
-        reply_markup: inlineKeyboard
-      });
-
-      // Kirim setiap part secara berurutan
-      for (let partIdx = 0; partIdx < totalParts; partIdx++) {
-        const start = partIdx * ACCOUNTS_PER_PART;
-        const end = start + ACCOUNTS_PER_PART;
-        const partAccounts = accounts.slice(start, end);
-        const partZipName = `${categoryName}_${garansiStatus}_part${partIdx + 1}_of_${totalParts}_${orderId}.zip`;
-
-        console.log(`📦 Merakit ZIP untuk Part ${partIdx + 1} (${partAccounts.length} akun)...`);
-        const tempZipPath = await createZipFromAccounts(partAccounts, `${orderId}_part${partIdx + 1}`);
-
-        console.log(`📤 Mengirim Part ${partIdx + 1}/${totalParts} ke chat Telegram menggunakan Axios...`);
-        const FormData = require('form-data');
-        const https = require('https');
-        const httpsAgent = new https.Agent({ keepAlive: true, family: 4 });
-
-        const form = new FormData();
-        form.append('chat_id', String(chatId));
-        form.append('document', fs.createReadStream(tempZipPath), {
-          filename: partZipName,
-          contentType: 'application/zip'
-        });
-        form.append('caption', `📦 <b>Bagian ${partIdx + 1}/${totalParts} (${partAccounts.length} akun)</b>\n🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code>`);
-        form.append('parse_mode', 'HTML');
-
-        try {
-          await axios.post(
-            `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendDocument`,
-            form,
-            {
-              headers: form.getHeaders(),
-              httpsAgent,
-              maxContentLength: Infinity,
-              maxBodyLength: Infinity
-            }
-          );
-          console.log(`✅ Sukses mengirim Part ${partIdx + 1}/${totalParts}`);
-        } catch (uploadErr) {
-          console.error(`❌ Gagal mengirim Part ${partIdx + 1}:`, uploadErr.response?.data || uploadErr.message);
-          throw uploadErr;
-        }
-
-        cleanupZip(tempZipPath);
-      }
-    }
+    await bot.sendMessage(chatId, deliveryText, {
+      parse_mode: 'HTML',
+      reply_markup: inlineKeyboard
+    });
 
     bot.deleteMessage(chatId, waitMsg.message_id).catch(() => {});
 
@@ -579,8 +482,9 @@ async function handlePayWithSaldo(bot, chatId, messageId, from) {
   const session = getSession(chatId);
   const { type, garansi, qty, totalPrice } = session;
 
-  if (!type || garansi === undefined || !qty || !totalPrice) {
-    await handleBeli(bot, chatId, messageId);
+  if (!type || !qty || !totalPrice) {
+    await editMain(bot, chatId,
+      '❌ Sesi order habis. Silakan mulai ulang.', {}, messageId);
     return;
   }
 
@@ -639,7 +543,7 @@ async function handlePayWithSaldo(bot, chatId, messageId, from) {
     );
 
     // Jalankan pengiriman order
-    await deliverOrder(bot, order.id).catch(console.error);
+    deliverOrder(bot, order.id).catch(console.error);
 
   } catch (err) {
     console.error('Pay with saldo error:', err.message);

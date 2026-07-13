@@ -81,15 +81,9 @@ npm install
 
 1. Buka [Firebase Console](https://console.firebase.google.com).
 2. Buat project baru → aktifkan **Firestore Database** (mode production).
-3. Aktifkan **Firebase Storage** → klik menu **Build** > **Storage** > klik **Get Started**.
-4. Aktifkan **Firestore API** di Google Cloud Console → buka link berikut (ganti `PROJECT_ID` dengan ID project Firebase kamu):
-   ```
-   https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID
-   ```
-   Lalu klik **Enable**. Tunggu 1-2 menit.
-5. Buka **Project Settings → Service Accounts**.
-6. Klik **Generate new private key** → file JSON terdownload.
-7. Rename file menjadi **`serviceAccountKey.json`** → letakkan di **folder utama** project (untuk lokal/VPS) atau simpan isinya untuk dipakai sebagai env variable di Vercel/Railway.
+3. Buka **Project Settings → Service Accounts**.
+4. Klik **Generate new private key** → file JSON terdownload.
+5. Rename file menjadi **`serviceAccountKey.json`** → letakkan di **folder utama** project.
 
 ### 3. Setup Telegram Storage Channel ☁️
 
@@ -167,84 +161,6 @@ Khusus untuk **Firebase (karena `serviceAccountKey.json` di-ignore)**, Anda cuku
 
 ---
 
-## 🔺 Panduan Deploy di Vercel (Gratis)
-
-Bot ini sudah mendukung deployment di **Vercel Serverless**. Saat dideploy di Vercel, bot otomatis beralih dari mode polling ke **Webhook**, dan file download dikirim via **Firebase Storage** (bukan file lokal).
-
-### 1. Push ke GitHub
-- Buat repositori **Private** di GitHub.
-- Push seluruh kode project ke repositori tersebut.
-- File `.env` dan `serviceAccountKey.json` otomatis diabaikan oleh `.gitignore`.
-
-### 2. Setup Firebase (WAJIB & KRUSIAL)
-
-Sebelum di-deploy ke Vercel, pastikan kamu sudah menyelesaikan **3 langkah penting** di bawah ini agar bot tidak mengalami error database:
-
-> [!IMPORTANT]
-> **Langkah A: Aktifkan Firestore Database**
-> 1. Buka [Firebase Console](https://console.firebase.google.com) dan pilih project kamu.
-> 2. Klik menu **Build** > **Firestore Database** di sidebar kiri.
-> 3. Klik tombol **Create Database** (Buat Database).
-> 4. Pilih lokasi terdekat (misal: `asia-southeast2` untuk Indonesia/Singapura) lalu pilih **Start in production mode**.
-
-> [!IMPORTANT]
-> **Langkah B: Aktifkan Firebase Storage (Tempat Download File Akun)**
-> 1. Klik menu **Build** > **Storage** di sidebar kiri.
-> 2. Klik tombol **Get Started** dan ikuti proses inisialisasinya sampai selesai dengan opsi default.
-
-> [!WARNING]
-> **Langkah C: Aktifkan Firestore API di Google Cloud (Paling Sering Terlewat!)**
-> 1. Buka link ini di browser kamu (ganti `PROJECT_ID` pada link dengan ID project Firebase kamu):
->    `https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID`
-> 2. Klik tombol **Enable** (Aktifkan).
-> 3. Tunggu 1 - 2 menit agar proses aktivasi terpropagasi oleh sistem Google.
-> *Jika langkah C dilewatkan, bot akan mengalami error `PERMISSION_DENIED: Cloud Firestore API has not been used...` saat dijalankan di Vercel.*
-
-### 3. Hubungkan ke Vercel
-1. Login ke [Vercel](https://vercel.com) menggunakan akun GitHub.
-2. Klik **Add New** → **Project** → pilih repositori bot.
-3. Klik **Deploy**.
-
-### 4. Masukkan Environment Variables
-Buka **Settings** > **Environment Variables** di project Vercel, lalu tambahkan:
-
-| Variable | Keterangan |
-|---|---|
-| `STORE_NAME` | Nama toko kamu |
-| `ADMIN_USERNAME` | Username Telegram admin tanpa `@` |
-| `BOT_TOKEN` | Token bot dari `@BotFather` |
-| `ADMIN_TELEGRAM_ID` | ID Telegram admin |
-| `PAKASIR_API_KEY` | API Key dari Pakasir |
-| `PAKASIR_SLUG` | Slug project Pakasir |
-| `ADMIN_SECRET_KEY` | Password rahasia (bebas diisi string acak) |
-| `STORAGE_CHANNEL_ID` | ID Channel Telegram Private (contoh: `-100xxxxxxxxx`) |
-| `FIREBASE_SERVICE_ACCOUNT` | **Seluruh isi file JSON** dari Service Account Key Firebase (copy-paste mentah-mentah) |
-| `BASE_URL` | URL Vercel kamu (contoh: `https://namaproject.vercel.app`) |
-
-> **Cara mengisi `FIREBASE_SERVICE_ACCOUNT`:**
-> 1. Buka file `serviceAccountKey.json` yang didownload dari Firebase Console.
-> 2. Copy **seluruh isi** file tersebut (termasuk tanda `{` dan `}`).
-> 3. Paste ke kolom **Value** environment variable di Vercel.
-
-### 5. Aktifkan Webhook Telegram (1x Saja)
-Setelah deploy pertama kali berhasil, buka URL berikut **1x saja** di browser kamu untuk mendaftarkan webhook bot ke Telegram:
-
-```
-https://namaproject.vercel.app/webhook/setup
-```
-
-Ganti `namaproject.vercel.app` dengan URL Vercel kamu. Jika berhasil, akan muncul pesan:
-```json
-{ "success": true, "message": "✅ Webhook Telegram berhasil diset ke: ..." }
-```
-
-> ⚠️ Langkah ini **cukup dilakukan 1x**. Setelah webhook terdaftar, bot akan otomatis menerima pesan tanpa perlu setup ulang. Kamu hanya perlu mengulangi langkah ini jika URL Vercel berubah.
-
-### 6. Selesai! 🎉
-Bot Telegram kamu sekarang sudah berjalan di Vercel!
-
----
-
 ## 📁 Struktur Folder
 
 ```
@@ -318,24 +234,6 @@ Ada dua cara upload stok akun di Panel Admin:
 - Cek apakah `BOT_TOKEN` di `.env` sudah benar.
 - Pastikan tidak ada bot lain yang sedang jalan dengan token yang sama (konflik polling).
 - Cek log: `pm2 logs panzzstore` atau log container Railway.
-- **Jika deploy di Vercel:** Pastikan `BASE_URL` sudah diisi dengan URL Vercel kamu agar webhook Telegram terdaftar otomatis.
-
-</details>
-
-<details>
-<summary><b>❌ PERMISSION_DENIED: Cloud Firestore API has not been used in project</b></summary>
-
-Error ini muncul karena **Firestore API belum diaktifkan** di Google Cloud Console. Cara mengatasinya:
-
-1. Buka link berikut (ganti `PROJECT_ID` dengan ID project Firebase kamu):
-   ```
-   https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=PROJECT_ID
-   ```
-2. Klik tombol **Enable**.
-3. Tunggu 1-2 menit agar perubahan terpropagasi.
-4. **Re-deploy** ulang di Vercel / Railway / restart server.
-
-Pastikan juga kamu sudah membuat **Firestore Database** di [Firebase Console](https://console.firebase.google.com) → **Build** > **Firestore Database** > **Create Database**.
 
 </details>
 

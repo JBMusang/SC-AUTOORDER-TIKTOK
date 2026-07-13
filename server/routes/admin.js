@@ -12,12 +12,8 @@ const {
 } = require('../firebase');
 const { uploadFileToTelegram } = require('../telegramStorage');
 
-const os = require('os');
-
 // Ensure temp upload directory exists
-const tempUploadDir = process.env.VERCEL === '1'
-  ? path.join(os.tmpdir(), 'panzzstore-uploads')
-  : path.join(__dirname, '../../storage/temp-uploads/');
+const tempUploadDir = path.join(__dirname, '../../storage/temp-uploads/');
 if (!fs.existsSync(tempUploadDir)) {
   fs.mkdirSync(tempUploadDir, { recursive: true });
 }
@@ -189,20 +185,11 @@ router.post('/stock/upload', adminAuth, upload.array('files', 500), async (req, 
           throw new Error('Duplicate account file detected');
         }
 
-        let telegramFileId = '';
-        let storagePath = '';
-        let fileContentBase64 = '';
+        // Upload langsung ke Telegram Storage
+        const telegramFileId = await uploadFileToTelegram(file.path, file.originalname);
 
-        if (file.size < 1024 * 1024) {
-          // Jika di bawah 1MB, simpan sebagai Base64 di Firestore (100% Gratis & Instan!)
-          fileContentBase64 = fs.readFileSync(file.path).toString('base64');
-        } else {
-          // Jika di atas 1MB, upload ke Telegram Storage (100% Gratis, Unlimited & Bebas Blaze Plan)
-          telegramFileId = await uploadFileToTelegram(file.path, file.originalname);
-        }
-
-        // Simpan ke Firestore dengan status available
-        await addAccount(type, garansiBool, telegramFileId, file.originalname, storagePath, fileHash, fileContentBase64);
+        // Simpan ke Firestore dengan status available, telegramFileId terisi, storagePath kosong
+        await addAccount(type, garansiBool, telegramFileId, file.originalname, '', fileHash);
 
         results.push({ fileName: file.originalname });
       } catch (err) {

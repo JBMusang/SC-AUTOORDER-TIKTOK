@@ -52,56 +52,52 @@ async function handleStart(bot, msg) {
 
   const name = first_name || username || 'Kawan';
 
-  // Animasi loading hanya dijalankan jika bukan di Vercel
-  const isVercel = process.env.VERCEL === '1';
+  // 1. Kirim pesan loading awal TANPA reply_markup agar pesan bisa di-edit lancar
   let loadingMsg;
+  try {
+    loadingMsg = await bot.sendMessage(chatId, `⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■□□□□□□□□] 20%</code>`, {
+      parse_mode: 'HTML',
+    });
+  } catch (e) {
+    console.error('Error sending loading message:', e.message);
+  }
 
-  if (!isVercel) {
+  // Frame 2: 60%
+  await new Promise(r => setTimeout(r, 450));
+  if (loadingMsg) {
     try {
-      loadingMsg = await bot.sendMessage(chatId, `⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■□□□□□□□□] 20%</code>`, {
+      await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■■■■■□□□□] 60%</code>`, {
+        chat_id: chatId,
+        message_id: loadingMsg.message_id,
         parse_mode: 'HTML',
       });
     } catch (e) {
-      console.error('Error sending loading message:', e.message);
+      console.error('Frame 60% error:', e.message);
     }
+  }
 
-    // Frame 2: 60%
-    await new Promise(r => setTimeout(r, 450));
-    if (loadingMsg) {
-      try {
-        await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■■■■■□□□□] 60%</code>`, {
-          chat_id: chatId,
-          message_id: loadingMsg.message_id,
-          parse_mode: 'HTML',
-        });
-      } catch (e) {
-        console.error('Frame 60% error:', e.message);
-      }
+  // Frame 3: 100%
+  await new Promise(r => setTimeout(r, 450));
+  if (loadingMsg) {
+    try {
+      await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■■■■■■■■■] 100%</code>`, {
+        chat_id: chatId,
+        message_id: loadingMsg.message_id,
+        parse_mode: 'HTML',
+      });
+    } catch (e) {
+      console.error('Frame 100% error:', e.message);
     }
+  }
 
-    // Frame 3: 100%
-    await new Promise(r => setTimeout(r, 450));
-    if (loadingMsg) {
-      try {
-        await bot.editMessageText(`⏳ <b>Loading ${storeName}...</b>\n\n<code>[■■■■■■■■■■] 100%</code>`, {
-          chat_id: chatId,
-          message_id: loadingMsg.message_id,
-          parse_mode: 'HTML',
-        });
-      } catch (e) {
-        console.error('Frame 100% error:', e.message);
-      }
-    }
+  await new Promise(r => setTimeout(r, 200));
 
-    await new Promise(r => setTimeout(r, 200));
-
-    // Hapus pesan loading setelah selesai agar room chat bersih
-    if (loadingMsg) {
-      try {
-        await bot.deleteMessage(chatId, loadingMsg.message_id);
-      } catch (e) {
-        console.error('Error deleting loading message:', e.message);
-      }
+  // Hapus pesan loading setelah selesai agar room chat bersih
+  if (loadingMsg) {
+    try {
+      await bot.deleteMessage(chatId, loadingMsg.message_id);
+    } catch (e) {
+      console.error('Error deleting loading message:', e.message);
     }
   }
 
