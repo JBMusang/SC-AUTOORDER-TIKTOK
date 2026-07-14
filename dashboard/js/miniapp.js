@@ -277,7 +277,7 @@ async function loadStock() {
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
 function orderItemHTML(order) {
-  const typeName = order.type === 'muda' ? '🧒 Muda' : '👴 Tua';
+  const typeName = order.type === 'muda' ? '🧒 Akun Tiktok x Line' : '👴 Akun Tiktok x Gsuite';
   const garansiName = order.garansi ? '✅' : '❌';
   return `<div class="order-item" onclick="showOrderDetail('${order.id}')">
     <div class="order-item-top">

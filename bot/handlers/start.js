@@ -20,7 +20,7 @@ function buildCaption(name) {
 🏪 Toko Akun TikTok otomatis terpercaya dengan pengiriman instan 24/7.
 
 <blockquote>⚡ <b>Info Layanan:</b>
-• Menyediakan Akun TikTok Siap Pakai (Muda & Tua)
+• Menyediakan Akun TikTok Siap Pakai (Tiktok x Line & Tiktok x Gsuite)
 • Mendukung pembayaran otomatis via QRIS & Saldo
 • Pesanan langsung dikirim detik itu juga setelah bayar</blockquote>
 

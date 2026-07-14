@@ -383,7 +383,7 @@ async function deliverOrder(bot, orderId) {
     
     const deliveryText = `✅ <b>Order Berhasil!</b>
     
-<blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
+<blockquote>📦 <b>${order.qty}x Akun TikTok ${order.type === 'muda' ? 'x Line' : 'x Gsuite'} ${order.garansi ? 'Garansi' : 'No Garansi'}</b>
 🆔 Order ID: <code>${order.pakasirOrderId || orderId}</code></blockquote>
 
 Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsung:
@@ -416,7 +416,7 @@ Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsun
         `🆔 <b>Order ID (Pakasir):</b> <code>${order.pakasirOrderId || orderId}</code>\n` +
         `🆔 <b>Order ID (System):</b> <code>${orderId}</code>\n` +
         `👤 <b>Pembeli:</b> @${order.username || 'User'} (ID: <code>${order.userId}</code>)\n` +
-        `📦 <b>Produk:</b> ${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}\n` +
+        `📦 <b>Produk:</b> ${order.qty}x Akun TikTok ${order.type === 'muda' ? 'x Line' : 'x Gsuite'} ${order.garansi ? 'Garansi' : 'No Garansi'}\n` +
         `💵 <b>Total Pembayaran:</b> Rp ${formatRupiah(order.totalPrice)}\n` +
         `💳 <b>Metode Pembayaran:</b> ${paymentMethod}\n` +
         `⏱️ <b>Tanggal:</b> ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}\n\n` +
@@ -443,7 +443,7 @@ Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsun
         const remainingStock = await getStockCount(order.type, order.garansi);
         if (remainingStock < 5) {
           const stockAlertMessage = `⚠️ <b>PERINGATAN STOK MENIPIS!</b>\n\n` +
-            `📦 <b>Kategori:</b> Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}\n` +
+            `📦 <b>Kategori:</b> Akun TikTok ${order.type === 'muda' ? 'x Line' : 'x Gsuite'} ${order.garansi ? 'Garansi' : 'No Garansi'}\n` +
             `🚨 <b>Sisa Stok:</b> <b>${remainingStock} akun</b>\n\n` +
             `<i>Silakan segera lakukan pengisian ulang stok akun melalui panel admin!</i>`;
           bot.sendMessage(adminTelegramId, stockAlertMessage, { parse_mode: 'HTML' }).catch(err => {
@@ -460,7 +460,7 @@ Silakan klik tombol di bawah ini untuk mendownload file akun Anda secara langsun
       const { buildMainKeyboard } = require('./start');
       const user = await getUser(chatId);
       const sisaSaldo = user ? (user.saldo || 0) : 0;
-      const finalCaption = `✅ <b>Order Selesai!</b>\n\n<blockquote>📦 ${order.qty}x Akun TikTok ${order.type === 'muda' ? 'Muda' : 'Tua'} ${order.garansi ? 'Garansi' : 'No Garansi'}\n💰 Total: Rp ${formatRupiah(order.totalPrice)}\n👤 Sisa Saldo: Rp ${formatRupiah(sisaSaldo)}</blockquote>\n🎉 <i>Link download file akun telah terkirim di bawah ini! Silakan klik untuk mengunduh.</i>`;
+      const finalCaption = `✅ <b>Order Selesai!</b>\n\n<blockquote>📦 ${order.qty}x Akun TikTok ${order.type === 'muda' ? 'x Line' : 'x Gsuite'} ${order.garansi ? 'Garansi' : 'No Garansi'}\n💰 Total: Rp ${formatRupiah(order.totalPrice)}\n👤 Sisa Saldo: Rp ${formatRupiah(sisaSaldo)}</blockquote>\n🎉 <i>Link download file akun telah terkirim di bawah ini! Silakan klik untuk mengunduh.</i>`;
       await editMain(bot, chatId, finalCaption, buildMainKeyboard(chatId));
     } catch (editMainErr) {
       console.error('Failed to update main banner to final success state:', editMainErr.message);

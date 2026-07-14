@@ -61,7 +61,7 @@ function statusBadge(status) {
 }
 
 function orderRow(order, compact = false) {
-  const typeName = order.type === 'muda' ? '🧒 Muda' : '👴 Tua';
+  const typeName = order.type === 'muda' ? '🧒 Akun Tiktok x Line' : '👴 Akun Tiktok x Gsuite';
   const garansiName = order.garansi ? '✅ Garansi' : '❌ No Garansi';
   const shortId = order.id.slice(0, 8) + '...';
 
