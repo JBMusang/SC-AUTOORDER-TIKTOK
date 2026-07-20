@@ -84,7 +84,7 @@ Silakan pilih opsi garansi untuk keamanan akun Anda:
 
 • ✅ <b>Dengan Garansi</b> — Rp ${formatRupiah(pG)}/akun
 Stok tersedia: <b>${stockG} akun</b>
-<i>Mendapatkan proteksi klaim ganti baru jika bermasalah.</i>
+<i>Hanya garansi banned, garansi cuma 6 jam dari pembelian.</i>
 
 • ❌ <b>Tanpa Garansi</b> — Rp ${formatRupiah(pNG)}/akun
 Stok tersedia: <b>${stockNG} akun</b>

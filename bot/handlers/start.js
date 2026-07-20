@@ -18,6 +18,7 @@ function buildCaption(name) {
   return `✨ <b>Halo, ${escapeHTML(name)}! Selamat datang di ${escapeHTML(storeName)}</b>
 
 🏪 Toko Akun TikTok otomatis terpercaya dengan pengiriman instan 24/7.
+dan Garansi Banned 6 jam. Beli semampu dan sebutuhnya dulu. Segera Garap setelah beli 🙏🙏🙏
 
 <blockquote>⚡ <b>Info Layanan:</b>
 • Menyediakan Akun TikTok Siap Pakai (Tiktok x Line & Tiktok x Gsuite)
